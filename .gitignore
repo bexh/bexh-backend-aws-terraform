@@ -1,3 +1,5 @@
 src/.terraform/
 src/terraform.tfstate
 src/terraform.tfstate.backup
+src/.DS_Store
+.DS_Store

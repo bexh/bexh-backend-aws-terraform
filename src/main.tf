@@ -108,11 +108,16 @@ resource "aws_lambda_function" "bexh_api_proxy_post" {
 
 resource "aws_api_gateway_deployment" "this" {
    depends_on = [
-     aws_lambda_function.bexh_api_proxy_post
+     aws_lambda_function.bexh_api_proxy_post,
+     aws_api_gateway_integration.integration
    ]
 
    rest_api_id = aws_api_gateway_rest_api.this.id
    stage_name  = "test"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_iam_role" "bexh_api_proxy_post_lambda_role" {
@@ -133,6 +138,11 @@ resource "aws_iam_role" "bexh_api_proxy_post_lambda_role" {
   ]
 }
 POLICY
+}
+
+resource "aws_iam_role_policy_attachment" "terraform_lambda_policy" {
+  role       = aws_iam_role.bexh_api_proxy_post_lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 resource "aws_lambda_permission" "apigw" {

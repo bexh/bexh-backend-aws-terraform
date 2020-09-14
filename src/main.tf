@@ -96,15 +96,23 @@ resource "aws_api_gateway_integration" "integration" {
 }
 
 resource "aws_lambda_function" "bexh_api_proxy_post" {
-  s3_bucket = "lambda-deploy-develop-189266647936"
-  s3_key = "lambda.py.zip"
+  s3_bucket = "bexh-lambda-deploy-develop-189266647936"
+  s3_key = "bexh-api-aws-lambda.zip"
   s3_object_version = var.bexh_api_lambda_s3_version
   function_name = "bexh-api-proxy-post"
   role          = aws_iam_role.bexh_api_proxy_post_lambda_role.arn
-  handler       = "lambda.lambda_handler"
-  runtime       = "python3.6"
-
-  # source_code_hash = filebase64sha256("lambda.zip")
+  handler       = "main.src.service.handler"
+  runtime       = "python3.8"
+  timeout       = 60
+  environment {
+    variables = {
+      ENV_NAME = var.env_name
+      LOG_LEVEL = var.log_level
+      TOKEN_TABLE_NAME = "Tokens"
+      MYSQL_HOST_URL = aws_db_instance.this.address
+      MYSQL_DATABASE_NAME = aws_db_instance.this.name
+    }
+  }
 }
 
 resource "aws_api_gateway_deployment" "this" {
@@ -155,6 +163,22 @@ resource "aws_lambda_permission" "apigw" {
    # The "/*/*" portion grants access from any method on any resource
    # within the API Gateway REST API.
    source_arn = "${aws_api_gateway_rest_api.this.execution_arn}/*/*"
+}
+
+resource "aws_dynamodb_table" "this" {
+  name           = "Tokens"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "User"
+
+  attribute {
+    name = "User"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "TimeToLive"
+    enabled        = true
+  }
 }
 
 output "base_url" {

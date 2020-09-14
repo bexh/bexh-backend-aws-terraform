@@ -5,5 +5,15 @@ variable "whitelisted_ips" {
 
 variable "bexh_api_lambda_s3_version" {
     type = string
-    default = "9V_l3pF7_W0LGDD7OSPw3633SaHeKiPG"
+    default = "9jUol62fQdOvh3_aSJR.S1C1GVFj.hIc"
+}
+
+variable "env_name" {
+    type = string
+    default = "dev"
+}
+
+variable "log_level" {
+    type = string
+    default = "INFO"
 }

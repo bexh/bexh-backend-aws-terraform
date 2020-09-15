@@ -1,14 +1,3 @@
-terraform {
-  backend "remote" {
-    hostname = "app.terraform.io"
-    organization = "bexh"
-
-    workspaces {
-      name = "bexh-backend-aws-terraform"
-    }
-  }
-}
-
 provider "aws" {
     region = "us-east-1"
 }
@@ -190,8 +179,4 @@ resource "aws_dynamodb_table" "this" {
     attribute_name = "TimeToLive"
     enabled        = true
   }
-}
-
-output "base_url" {
-  value = aws_api_gateway_deployment.this.invoke_url
 }

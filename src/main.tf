@@ -99,7 +99,7 @@ resource "aws_lambda_function" "bexh_api_proxy_post" {
   s3_bucket = "bexh-lambda-deploy-develop-189266647936"
   s3_key = "bexh-api-aws-lambda.zip"
   s3_object_version = var.bexh_api_lambda_s3_version
-  function_name = "exh-api-proxy-post"
+  function_name = "bexh-api-proxy-post"
   role          = aws_iam_role.bexh_api_proxy_post_lambda_role.arn
   handler       = "main.src.service.handler"
   runtime       = "python3.8"

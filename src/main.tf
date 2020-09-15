@@ -1,3 +1,14 @@
+terraform {
+  backend "remote" {
+    hostname = "app.terraform.io"
+    organization = "bexh"
+
+    workspaces {
+      name = "bexh-backend-aws-terraform"
+    }
+  }
+}
+
 provider "aws" {
     region = "us-east-1"
 }

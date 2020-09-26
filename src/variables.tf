@@ -45,5 +45,5 @@ variable "es_domain" {
 variable "es_subnets" {
   type        = list(string)
   description = "List of VPC Subnet IDs to create ElasticSearch Endpoints in"
-  default     = ["subnet-52377c0e", "subnet-8063638f", "subnet-85a331bb", "subnet-8e2570a0", "subnet-8ef7b8e9", "subnet-a06c72ea"]
+  default     = ["subnet-52377c0e"]
 }

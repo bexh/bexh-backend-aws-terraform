@@ -226,6 +226,15 @@ resource "aws_elasticsearch_domain" "es" {
   domain_name           = var.es_domain
   elasticsearch_version = "6.3"
 
+  cluster_config {
+    instance_type = "t2.medium.elasticsearch"
+  }
+
+  ebs_options {
+    ebs_enabled = true
+    volume_size = 10
+  }
+
   access_policies = <<CONFIG
 {
   "Version": "2012-10-17",
@@ -244,4 +253,3 @@ resource "aws_elasticsearch_domain" "es" {
     Domain = var.es_domain
   }
 }
-

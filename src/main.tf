@@ -73,15 +73,35 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = ["${aws_security_group.rds_sg.id}"]
 }
 
-# resource "null_resource" "setup_db" {
-#   depends_on = [aws_db_instance.this] #wait for the db to be ready
-#   triggers = {
-#     file_sha = "${sha1(file("file.sql"))}"
-#   }
-#   provisioner "local-exec" {
-#     command = "mysql -u ${local.db_creds.username} -p${local.db_creds.password} -h ${aws_db_instance.this.address} < file.sql"
-#   }
+/*
+taking this out as it will need the latter remote-exec since tf cloud doesn't have mysql installed
+
+resource "null_resource" "setup_db" {
+  depends_on = [aws_db_instance.this] #wait for the db to be ready
+  triggers = {
+    file_sha = "${sha1(file("file.sql"))}"
+  }
+  provisioner "local-exec" {
+    command = "mysql -u ${local.db_creds.username} -p${local.db_creds.password} -h ${aws_db_instance.this.address} < file.sql"
+  }
 }
+
+resource "aws_instance" "web" {
+  # ...
+
+  provisioner "file" {
+    source      = "script.sh"
+    destination = "/tmp/script.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/script.sh",
+      "/tmp/script.sh args",
+    ]
+  }
+}
+*/
 
 // region: api gateway + lambda
 

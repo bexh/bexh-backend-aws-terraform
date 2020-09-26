@@ -215,6 +215,30 @@ resource "aws_security_group" "es_sg" {
       var.vpc_cidr
     ]
   }
+
+  ingress {
+    description = "whitelist IPs"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = var.whitelisted_ips
+  }
+
+  ingress {
+    description = "All inbound from sg"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_iam_service_linked_role" "es" {

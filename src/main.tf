@@ -217,24 +217,17 @@ resource "aws_security_group" "es_sg" {
   }
 }
 
+resource "aws_iam_service_linked_role" "es" {
+    aws_service_name = "es.amazonaws.com"
+    description      = "Allows Amazon ES to manage AWS resources for a domain on your behalf."
+}
+
 resource "aws_elasticsearch_domain" "es" {
   domain_name           = var.es_domain
   elasticsearch_version = "6.3"
 
   cluster_config {
     instance_type = "t2.medium.elasticsearch"
-  }
-
-  vpc_options {
-    subnet_ids = var.es_subnets
-    security_group_ids = [
-      aws_security_group.es_sg.id
-    ]
-  }
-
-  ebs_options {
-    ebs_enabled = true
-    volume_size = 10
   }
 
   access_policies = <<CONFIG
@@ -255,3 +248,4 @@ resource "aws_elasticsearch_domain" "es" {
     Domain = var.es_domain
   }
 }
+

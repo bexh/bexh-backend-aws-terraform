@@ -79,7 +79,7 @@ resource "null_resource" "setup_db" {
     file_sha = "${sha1(file("file.sql"))}"
   }
   provisioner "local-exec" {
-    command = "mysql -u ${local.db_creds.username} -p${local.db_creds.password} -h ${aws_db_instance.this.address} < file.sql"
+    command = ""
   }
 }
 

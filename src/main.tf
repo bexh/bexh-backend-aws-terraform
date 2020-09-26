@@ -249,7 +249,7 @@ resource "aws_elasticsearch_domain" "es" {
     tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
   }
 
-  access_policies = [data.aws_iam_policy_document.this.json]
+  access_policies = data.aws_iam_policy_document.this.json
 
   tags = {
     Domain = var.es_domain

@@ -73,9 +73,6 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = ["${aws_security_group.rds_sg.id}"]
 }
 
-/*
-taking this out as it will need the latter remote-exec since tf cloud doesn't have mysql installed
-
 resource "null_resource" "setup_db" {
   depends_on = [aws_db_instance.this] #wait for the db to be ready
   triggers = {
@@ -85,23 +82,6 @@ resource "null_resource" "setup_db" {
     command = "mysql -u ${local.db_creds.username} -p${local.db_creds.password} -h ${aws_db_instance.this.address} < file.sql"
   }
 }
-
-resource "aws_instance" "web" {
-  # ...
-
-  provisioner "file" {
-    source      = "script.sh"
-    destination = "/tmp/script.sh"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /tmp/script.sh",
-      "/tmp/script.sh args",
-    ]
-  }
-}
-*/
 
 // region: api gateway + lambda
 
@@ -225,20 +205,20 @@ resource "aws_dynamodb_table" "this" {
 resource "aws_security_group" "es_sg" {
   name        = "${var.es_domain}-sg"
   description = "Allow inbound traffic to ElasticSearch from VPC CIDR"
-  vpc_id      = var.vpc
+  vpc_id      = "${var.vpc}"
 
   ingress {
     from_port = 0
     to_port   = 0
     protocol  = "-1"
     cidr_blocks = [
-      var.vpc_cidr
+      "${var.vpc_cidr}"
     ]
   }
 }
 
 resource "aws_elasticsearch_domain" "es" {
-  domain_name           = var.es_domain
+  domain_name           = "${var.es_domain}"
   elasticsearch_version = "6.3"
 
   cluster_config {
@@ -246,9 +226,9 @@ resource "aws_elasticsearch_domain" "es" {
   }
 
   vpc_options {
-    subnet_ids = var.es_subnets
+    subnet_ids = "${var.es_subnets}"
     security_group_ids = [
-      aws_security_group.es_sg.id
+      "${aws_security_group.es_sg.id}"
     ]
   }
 
@@ -271,7 +251,7 @@ resource "aws_elasticsearch_domain" "es" {
 }
   CONFIG
 
-  tags = {
-    Domain = var.es_domain
+  tags {
+    Domain = "${var.es_domain}"
   }
 }

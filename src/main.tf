@@ -1,6 +1,6 @@
 terraform {
   backend "remote" {
-    hostname = "app.terraform.io"
+    hostname     = "app.terraform.io"
     organization = "bexh"
 
     workspaces {
@@ -10,8 +10,10 @@ terraform {
 }
 
 provider "aws" {
-    region = "us-east-1"
+  region = "us-east-1"
 }
+
+data "aws_region" "current" {}
 
 data "aws_caller_identity" "current" {}
 
@@ -25,48 +27,50 @@ locals {
   )
 }
 
+// region: rds
+
 resource "aws_security_group" "rds_sg" {
-    name = "tcp-ip-whitelist"
-    description = "RDS tcp ip whitelist"
+  name        = "tcp-ip-whitelist"
+  description = "RDS tcp ip whitelist"
 
-    ingress {
-        description = "TCP/IP for RDS with whitelisting"
-        from_port = 3306
-        to_port = 3306
-        protocol  = "tcp"
-        cidr_blocks = var.whitelisted_ips
-    }
+  ingress {
+    description = "TCP/IP for RDS with whitelisting"
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = var.whitelisted_ips
+  }
 
-    ingress {
-        description = "All inbound from sg"
-        from_port = 0
-        to_port = 0
-        protocol = "-1"
-        self = true
-    }
+  ingress {
+    description = "All inbound from sg"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
 
-    egress {
-        description = "All outbound"
-        from_port = 0
-        to_port = 0
-        protocol    = "-1"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 resource "aws_db_instance" "this" {
-    allocated_storage = 5
-    storage_type = "gp2"
-    engine = "mysql"
-    engine_version = "8.0.17"
-    instance_class = "db.t2.micro"
-    name = "BexhBackendDbMain"
-    username = local.db_creds.username
-    password = local.db_creds.password
-    parameter_group_name = "default.mysql8.0"
-    publicly_accessible = true
-    skip_final_snapshot = true
-    vpc_security_group_ids = ["${aws_security_group.rds_sg.id}"]
+  allocated_storage      = 5
+  storage_type           = "gp2"
+  engine                 = "mysql"
+  engine_version         = "8.0.17"
+  instance_class         = "db.t2.micro"
+  name                   = "BexhBackendDbMain"
+  username               = local.db_creds.username
+  password               = local.db_creds.password
+  parameter_group_name   = "default.mysql8.0"
+  publicly_accessible    = true
+  skip_final_snapshot    = true
+  vpc_security_group_ids = ["${aws_security_group.rds_sg.id}"]
 }
 
 resource "null_resource" "setup_db" {
@@ -78,6 +82,8 @@ resource "null_resource" "setup_db" {
     command = "mysql -u ${local.db_creds.username} -p${local.db_creds.password} -h ${aws_db_instance.this.address} < file.sql"
   }
 }
+
+// region: api gateway + lambda
 
 resource "aws_api_gateway_rest_api" "this" {
   name        = "BexhApi"
@@ -107,33 +113,33 @@ resource "aws_api_gateway_integration" "integration" {
 }
 
 resource "aws_lambda_function" "bexh_api_proxy_post" {
-  s3_bucket = "bexh-lambda-deploy-develop-189266647936"
-  s3_key = "bexh-api-aws-lambda.zip"
+  s3_bucket         = "bexh-lambda-deploy-develop-189266647936"
+  s3_key            = "bexh-api-aws-lambda.zip"
   s3_object_version = var.bexh_api_lambda_s3_version
-  function_name = "bexh-api-proxy-post"
-  role          = aws_iam_role.bexh_api_proxy_post_lambda_role.arn
-  handler       = "main.src.service.handler"
-  runtime       = "python3.8"
-  timeout       = 60
+  function_name     = "bexh-api-proxy-post"
+  role              = aws_iam_role.bexh_api_proxy_post_lambda_role.arn
+  handler           = "main.src.service.handler"
+  runtime           = "python3.8"
+  timeout           = 60
   environment {
     variables = {
-      ENV_NAME = var.env_name
-      LOG_LEVEL = var.log_level
-      TOKEN_TABLE_NAME = "Tokens"
-      MYSQL_HOST_URL = aws_db_instance.this.address
+      ENV_NAME            = var.env_name
+      LOG_LEVEL           = var.log_level
+      TOKEN_TABLE_NAME    = "Tokens"
+      MYSQL_HOST_URL      = aws_db_instance.this.address
       MYSQL_DATABASE_NAME = aws_db_instance.this.name
     }
   }
 }
 
 resource "aws_api_gateway_deployment" "this" {
-   depends_on = [
-     aws_lambda_function.bexh_api_proxy_post,
-     aws_api_gateway_integration.integration
-   ]
+  depends_on = [
+    aws_lambda_function.bexh_api_proxy_post,
+    aws_api_gateway_integration.integration
+  ]
 
-   rest_api_id = aws_api_gateway_rest_api.this.id
-   stage_name  = "test"
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  stage_name  = "test"
 
   lifecycle {
     create_before_destroy = true
@@ -166,20 +172,22 @@ resource "aws_iam_role_policy_attachment" "terraform_lambda_policy" {
 }
 
 resource "aws_lambda_permission" "apigw" {
-   statement_id  = "AllowAPIGatewayInvoke"
-   action        = "lambda:InvokeFunction"
-   function_name = aws_lambda_function.bexh_api_proxy_post.function_name
-   principal     = "apigateway.amazonaws.com"
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.bexh_api_proxy_post.function_name
+  principal     = "apigateway.amazonaws.com"
 
-   # The "/*/*" portion grants access from any method on any resource
-   # within the API Gateway REST API.
-   source_arn = "${aws_api_gateway_rest_api.this.execution_arn}/*/*"
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.this.execution_arn}/*/*"
 }
 
+// region: DynamoDb
+
 resource "aws_dynamodb_table" "this" {
-  name           = "Tokens"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "User"
+  name         = "Tokens"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "User"
 
   attribute {
     name = "User"
@@ -189,5 +197,61 @@ resource "aws_dynamodb_table" "this" {
   ttl {
     attribute_name = "TimeToLive"
     enabled        = true
+  }
+}
+
+// region: ES
+
+resource "aws_security_group" "es_sg" {
+  name        = "${var.es_domain}-sg"
+  description = "Allow inbound traffic to ElasticSearch from VPC CIDR"
+  vpc_id      = "${var.vpc}"
+
+  ingress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    cidr_blocks = [
+      "${var.vpc_cidr}"
+    ]
+  }
+}
+
+resource "aws_elasticsearch_domain" "es" {
+  domain_name           = "${var.es_domain}"
+  elasticsearch_version = "6.3"
+
+  cluster_config {
+    instance_type = "t2.medium.elasticsearch"
+  }
+
+  vpc_options {
+    subnet_ids = "${var.es_subnets}"
+    security_group_ids = [
+      "${aws_security_group.es_sg.id}"
+    ]
+  }
+
+  ebs_options {
+    ebs_enabled = true
+    volume_size = 10
+  }
+
+  access_policies = <<CONFIG
+{
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+          "Action": "es:*",
+          "Principal": "*",
+          "Effect": "Allow",
+          "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"
+      }
+  ]
+}
+  CONFIG
+
+  tags {
+    Domain = "${var.es_domain}"
   }
 }

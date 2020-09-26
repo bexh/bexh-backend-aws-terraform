@@ -224,10 +224,15 @@ resource "aws_iam_service_linked_role" "es" {
 
 resource "aws_elasticsearch_domain" "es" {
   domain_name           = var.es_domain
-  elasticsearch_version = "6.3"
+  elasticsearch_version = "6.8"
 
   cluster_config {
     instance_type = "t2.medium.elasticsearch"
+  }
+
+  vpc_options {
+    subnet_ids         = var.es_subnets
+    security_group_ids = [aws_security_group.es_sg.id]
   }
 
   ebs_options {
@@ -235,21 +240,30 @@ resource "aws_elasticsearch_domain" "es" {
     volume_size = 10
   }
 
-  access_policies = <<CONFIG
-{
-  "Version": "2012-10-17",
-  "Statement": [
-      {
-          "Action": "es:*",
-          "Principal": "*",
-          "Effect": "Allow",
-          "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"
-      }
-  ]
-}
-  CONFIG
+  node_to_node_encryption {
+    enabled = true
+  }
+
+  domain_endpoint_options {
+    enforce_https       = true
+    tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
+  }
+
+  access_policies = [data.aws_iam_policy_document.this.json]
 
   tags = {
     Domain = var.es_domain
+  }
+}
+
+data "aws_iam_policy_document" "this" {
+  statement {
+    effect  = "Allow"
+    actions = ["es:*"]
+    principals {
+      type = "AWS"
+      identifiers = ["*"]
+    }
+    resources = ["arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"]
   }
 }

@@ -79,7 +79,7 @@ resource "null_resource" "setup_db" {
     file_sha = "${sha1(file("file.sql"))}"
   }
   provisioner "local-exec" {
-    command = ""
+    command = "echo test"
   }
 }
 

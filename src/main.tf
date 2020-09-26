@@ -205,20 +205,20 @@ resource "aws_dynamodb_table" "this" {
 resource "aws_security_group" "es_sg" {
   name        = "${var.es_domain}-sg"
   description = "Allow inbound traffic to ElasticSearch from VPC CIDR"
-  vpc_id      = "${var.vpc}"
+  vpc_id      = var.vpc
 
   ingress {
     from_port = 0
     to_port   = 0
     protocol  = "-1"
     cidr_blocks = [
-      "${var.vpc_cidr}"
+      var.vpc_cidr
     ]
   }
 }
 
 resource "aws_elasticsearch_domain" "es" {
-  domain_name           = "${var.es_domain}"
+  domain_name           = var.es_domain
   elasticsearch_version = "6.3"
 
   cluster_config {
@@ -226,9 +226,9 @@ resource "aws_elasticsearch_domain" "es" {
   }
 
   vpc_options {
-    subnet_ids = "${var.es_subnets}"
+    subnet_ids = var.es_subnets
     security_group_ids = [
-      "${aws_security_group.es_sg.id}"
+      aws_security_group.es_sg.id
     ]
   }
 
@@ -251,7 +251,7 @@ resource "aws_elasticsearch_domain" "es" {
 }
   CONFIG
 
-  tags {
-    Domain = "${var.es_domain}"
+  tags = {
+    Domain = var.es_domain
   }
 }

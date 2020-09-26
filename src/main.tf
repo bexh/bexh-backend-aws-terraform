@@ -73,7 +73,6 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = ["${aws_security_group.rds_sg.id}"]
 }
 
-/*
 resource "null_resource" "setup_db" {
   depends_on = [aws_db_instance.this] #wait for the db to be ready
   triggers = {
@@ -83,7 +82,6 @@ resource "null_resource" "setup_db" {
     command = "mysql -u ${local.db_creds.username} -p${local.db_creds.password} -h ${aws_db_instance.this.address} < file.sql"
   }
 }
-*/
 
 // region: api gateway + lambda
 

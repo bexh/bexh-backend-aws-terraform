@@ -125,7 +125,7 @@ resource "aws_lambda_function" "bexh_api_proxy_post" {
     variables = {
       ENV_NAME            = var.env_name
       LOG_LEVEL           = var.log_level
-      TOKEN_TABLE_NAME    = aws_dynamodb_table.this.name
+      # TOKEN_TABLE_NAME    = aws_dynamodb_table.this.name
       MYSQL_HOST_URL      = aws_db_instance.this.address
       MYSQL_DATABASE_NAME = aws_db_instance.this.name
     }
@@ -184,21 +184,21 @@ resource "aws_lambda_permission" "apigw" {
 
 // region: DynamoDb
 
-resource "aws_dynamodb_table" "this" {
-  name         = "Tokens"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "Uid"
+# resource "aws_dynamodb_table" "this" {
+#   name         = "Tokens"
+#   billing_mode = "PAY_PER_REQUEST"
+#   hash_key     = "Uid"
 
-  attribute {
-    name = "Uid"
-    type = "N"
-  }
+#   attribute {
+#     name = "Uid"
+#     type = "N"
+#   }
 
-  ttl {
-    attribute_name = "TimeToLive"
-    enabled        = true
-  }
-}
+#   ttl {
+#     attribute_name = "TimeToLive"
+#     enabled        = true
+#   }
+# }
 
 // region: ES
 
@@ -301,7 +301,7 @@ resource "aws_lambda_function" "bexh_email" {
   role              = aws_iam_role.bexh_emailer_lambda_role.arn
   handler           = "main.src.app.verification_email.service.handler"
   runtime           = "python3.8"
-  timeout           = 3600
+  timeout           = 600
   environment {
     variables = {
       ENV_NAME            = var.env_name

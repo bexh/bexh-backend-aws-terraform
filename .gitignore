@@ -2,3 +2,4 @@
 src/.terraform/terraform.tfstate
 src/.terraform
 src/.DS_Store
+src/*.auto.tfvars

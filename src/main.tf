@@ -125,7 +125,7 @@ resource "aws_lambda_function" "bexh_api_proxy_post" {
     variables = {
       ENV_NAME            = var.env_name
       LOG_LEVEL           = var.log_level
-      TOKEN_TABLE_NAME    = "Tokens"
+      TOKEN_TABLE_NAME    = aws_dynamodb_table.this.name
       MYSQL_HOST_URL      = aws_db_instance.this.address
       MYSQL_DATABASE_NAME = aws_db_instance.this.name
     }
@@ -187,11 +187,11 @@ resource "aws_lambda_permission" "apigw" {
 resource "aws_dynamodb_table" "this" {
   name         = "Tokens"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "User"
+  hash_key     = "Uid"
 
   attribute {
-    name = "User"
-    type = "S"
+    name = "Uid"
+    type = "N"
   }
 
   ttl {
@@ -242,8 +242,8 @@ resource "aws_security_group" "es_sg" {
 }
 
 resource "aws_iam_service_linked_role" "es" {
-    aws_service_name = "es.amazonaws.com"
-    description      = "Allows Amazon ES to manage AWS resources for a domain on your behalf."
+  aws_service_name = "es.amazonaws.com"
+  description      = "Allows Amazon ES to manage AWS resources for a domain on your behalf."
 }
 
 resource "aws_elasticsearch_domain" "es" {
@@ -285,9 +285,68 @@ data "aws_iam_policy_document" "this" {
     effect  = "Allow"
     actions = ["es:*"]
     principals {
-      type = "AWS"
+      type        = "AWS"
       identifiers = ["*"]
     }
     resources = ["arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"]
   }
+}
+
+// section: Email Integration
+resource "aws_lambda_function" "bexh_email" {
+  s3_bucket         = "bexh-lambda-deploy-develop-189266647936"
+  s3_key            = "bexh-email-aws-lambda.zip"
+  s3_object_version = var.bexh_email_lambda_s3_version
+  function_name     = "bexh-verification-email"
+  role              = aws_iam_role.bexh_emailer_lambda_role.arn
+  handler           = "main.src.app.verification_email.service.handler"
+  runtime           = "python3.8"
+  timeout           = 3600
+  environment {
+    variables = {
+      ENV_NAME            = var.env_name
+      LOG_LEVEL           = var.log_level
+      TWILIO_API_KEY      = var.twilio_api_key
+    }
+  }
+}
+
+resource "aws_sns_topic" "email_topic" {
+  name = "bexh-email-handler-topic"
+}
+
+resource "aws_lambda_permission" "email_invoke_function" {
+  statement_id  = "AllowSnsInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.bexh_email.function_name
+  principal     = "sns.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = aws_sns_topic.email_topic.arn
+}
+
+resource "aws_iam_role" "bexh_emailer_lambda_role" {
+  name = "bexh-emailer-lambda-role"
+
+  assume_role_policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_iam_role_policy_attachment" "emailer_basic_policy" {
+  role       = aws_iam_role.bexh_emailer_lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }

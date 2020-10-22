@@ -8,6 +8,11 @@ variable "bexh_api_lambda_s3_version" {
   default = "9jUol62fQdOvh3_aSJR.S1C1GVFj.hIc"
 }
 
+variable "bexh_email_lambda_s3_version" {
+  type = string
+  default = "_hI6k4hS0OrwDSLzspnrIu1atkSwo3MQ"
+}
+
 variable "env_name" {
   type    = string
   default = "dev"
@@ -46,4 +51,14 @@ variable "es_subnets" {
   type        = list(string)
   description = "List of VPC Subnet IDs to create ElasticSearch Endpoints in"
   default     = ["subnet-52377c0e"]
+}
+
+variable "kibana_access" {
+  type        = bool
+  description = "Enables kibana on ES"
+  default     = true
+}
+
+variable "twilio_api_key" {
+  type = string
 }

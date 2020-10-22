@@ -315,6 +315,12 @@ resource "aws_sns_topic" "email_topic" {
   name = "bexh-email-handler-topic"
 }
 
+resource "aws_sns_topic_subscription" "invoke_with_sns" {
+  topic_arn = aws_sns_topic.email_topic.arn
+  protocol = "lambda"
+  endpoint = aws_lambda_function.bexh_email.arn
+}
+
 resource "aws_sns_topic_policy" "default" {
   arn = aws_sns_topic.email_topic.arn
 

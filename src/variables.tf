@@ -62,3 +62,9 @@ variable "kibana_access" {
 variable "twilio_api_key" {
   type = string
 }
+
+variable "base_url" {
+  type = string
+  description = "Base url where website is hosted given the env"
+  default = "localhost:3000"
+}

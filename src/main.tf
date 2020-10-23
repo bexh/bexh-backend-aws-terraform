@@ -307,6 +307,7 @@ resource "aws_lambda_function" "bexh_email" {
       ENV_NAME            = var.env_name
       LOG_LEVEL           = var.log_level
       TWILIO_API_KEY      = var.twilio_api_key
+      BASE_URL            = var.base_url
     }
   }
 }

@@ -68,3 +68,9 @@ variable "base_url" {
   description = "Base url where website is hosted given the env"
   default = "localhost:3000"
 }
+
+variable "bexh_email" {
+  type = string
+  description = "Sender email address for mailer lambda"
+  default = "bexh.dev@gmail.com"
+}

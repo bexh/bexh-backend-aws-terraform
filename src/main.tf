@@ -113,7 +113,7 @@ resource "aws_api_gateway_integration" "integration" {
 }
 
 resource "aws_lambda_function" "bexh_api_proxy_post" {
-  s3_bucket         = "bexh-lambda-deploy-develop-189266647936"
+  s3_bucket         = "bexh-lambda-deploy-dev-189266647936"
   s3_key            = "bexh-api-aws-lambda.zip"
   s3_object_version = var.bexh_api_lambda_s3_version
   function_name     = "bexh-api-proxy-post"

@@ -1,7 +1,11 @@
-output "arn" {
-    value = aws_lambda_function.this.arn
+output "aws_lambda_function" {
+    value = aws_lambda_function.this
 }
 
-output "function_name" {
-    value = aws_lambda_function.this.function_name
+output "aws_iam_role" {
+    value = aws_iam_role.lambda_role
+}
+
+output "aws_iam_role_policy_attachment" {
+    value = aws_iam_role_policy_attachment.basic_lambda_policy
 }

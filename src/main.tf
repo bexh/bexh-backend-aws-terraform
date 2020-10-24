@@ -378,23 +378,23 @@ data "aws_iam_policy_document" "this" {
 #   }
 # }
 
-# module "bexh_emailer_sns_lambda" {
-#   source = "./modules/bexh_sns_lambda_integration"
+module "bexh_emailer_sns_lambda" {
+  source = "./modules/bexh_sns_lambda_integration"
 
-#   function_name     = "verification-email"
-#   s3_key            = "bexh-email-aws-lambda.zip"
-#   s3_object_version = var.bexh_email_lambda_s3_version
-#   env_name          = var.env_name
-#   account_id        = data.aws_caller_identity.current.account_id
-#   handler           = "main.src.app.verification_email.service.handler"
-#   timeout           = 900
-#   env_vars = {
-#     ENV_NAME       = var.env_name
-#     LOG_LEVEL      = var.log_level
-#     TWILIO_API_KEY = var.twilio_api_key
-#     BASE_URL       = var.base_url
-#     BEXH_EMAIL     = var.bexh_email
-#   }
+  function_name     = "verification-email"
+  s3_key            = "bexh-email-aws-lambda.zip"
+  s3_object_version = var.bexh_email_lambda_s3_version
+  env_name          = var.env_name
+  account_id        = data.aws_caller_identity.current.account_id
+  handler           = "main.src.app.verification_email.service.handler"
+  timeout           = 900
+  env_vars = {
+    ENV_NAME       = var.env_name
+    LOG_LEVEL      = var.log_level
+    TWILIO_API_KEY = var.twilio_api_key
+    BASE_URL       = var.base_url
+    BEXH_EMAIL     = var.bexh_email
+  }
 
-#   sns_topic_name = "verification-email"
-# }
+  sns_topic_name = "verification-email"
+}

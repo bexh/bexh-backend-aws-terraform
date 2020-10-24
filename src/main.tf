@@ -313,17 +313,6 @@ data "aws_iam_policy_document" "this" {
 #   }
 # }
 
-# resource "aws_lambda_permission" "email_invoke_function" {
-#   statement_id  = "AllowSnsInvoke"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.bexh_email.function_name
-#   principal     = "sns.amazonaws.com"
-
-#   # The "/*/*" portion grants access from any method on any resource
-#   # within the API Gateway REST API.
-#   source_arn = aws_sns_topic.email_topic.arn
-# }
-
 # resource "aws_iam_role" "bexh_emailer_lambda_role" {
 #   name = "bexh-emailer-lambda-role"
 
@@ -366,6 +355,17 @@ module "bexh_emailer_lambda" {
     BASE_URL       = var.base_url
     BEXH_EMAIL     = var.bexh_email
   }
+}
+
+resource "aws_lambda_permission" "email_invoke_function" {
+  statement_id  = "AllowSnsInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = module.bexh_emailer_lambda.function_name
+  principal     = "sns.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = aws_sns_topic.email_topic.arn
 }
 
 resource "aws_sns_topic" "email_topic" {

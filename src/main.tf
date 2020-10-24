@@ -202,95 +202,95 @@ resource "aws_dynamodb_table" "this" {
 
 // region: ES
 
-resource "aws_security_group" "es_sg" {
-  name        = "${var.es_domain}-sg"
-  description = "Allow inbound traffic to ElasticSearch from VPC CIDR"
-  vpc_id      = var.vpc
+# resource "aws_security_group" "es_sg" {
+#   name        = "${var.es_domain}-sg"
+#   description = "Allow inbound traffic to ElasticSearch from VPC CIDR"
+#   vpc_id      = var.vpc
 
-  ingress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-    cidr_blocks = [
-      var.vpc_cidr
-    ]
-  }
+#   ingress {
+#     from_port = 0
+#     to_port   = 0
+#     protocol  = "-1"
+#     cidr_blocks = [
+#       var.vpc_cidr
+#     ]
+#   }
 
-  ingress {
-    description = "whitelist IPs"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = var.whitelisted_ips
-  }
+#   ingress {
+#     description = "whitelist IPs"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = var.whitelisted_ips
+#   }
 
-  ingress {
-    description = "All inbound from sg"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
-  }
+#   ingress {
+#     description = "All inbound from sg"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     self        = true
+#   }
 
-  egress {
-    description = "All outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
+#   egress {
+#     description = "All outbound"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+# }
 
-resource "aws_iam_service_linked_role" "es" {
-  aws_service_name = "es.amazonaws.com"
-  description      = "Allows Amazon ES to manage AWS resources for a domain on your behalf."
-}
+# resource "aws_iam_service_linked_role" "es" {
+#   aws_service_name = "es.amazonaws.com"
+#   description      = "Allows Amazon ES to manage AWS resources for a domain on your behalf."
+# }
 
-resource "aws_elasticsearch_domain" "es" {
-  domain_name           = var.es_domain
-  elasticsearch_version = "6.8"
+# resource "aws_elasticsearch_domain" "es" {
+#   domain_name           = var.es_domain
+#   elasticsearch_version = "6.8"
 
-  cluster_config {
-    instance_type = "t2.medium.elasticsearch"
-  }
+#   cluster_config {
+#     instance_type = "t2.medium.elasticsearch"
+#   }
 
-  vpc_options {
-    subnet_ids         = var.es_subnets
-    security_group_ids = [aws_security_group.es_sg.id]
-  }
+#   vpc_options {
+#     subnet_ids         = var.es_subnets
+#     security_group_ids = [aws_security_group.es_sg.id]
+#   }
 
-  ebs_options {
-    ebs_enabled = true
-    volume_size = 10
-  }
+#   ebs_options {
+#     ebs_enabled = true
+#     volume_size = 10
+#   }
 
-  node_to_node_encryption {
-    enabled = true
-  }
+#   node_to_node_encryption {
+#     enabled = true
+#   }
 
-  domain_endpoint_options {
-    enforce_https       = true
-    tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
-  }
+#   domain_endpoint_options {
+#     enforce_https       = true
+#     tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
+#   }
 
-  access_policies = data.aws_iam_policy_document.this.json
+#   access_policies = data.aws_iam_policy_document.this.json
 
-  tags = {
-    Domain = var.es_domain
-  }
-}
+#   tags = {
+#     Domain = var.es_domain
+#   }
+# }
 
-data "aws_iam_policy_document" "this" {
-  statement {
-    effect  = "Allow"
-    actions = ["es:*"]
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-    resources = ["arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"]
-  }
-}
+# data "aws_iam_policy_document" "this" {
+#   statement {
+#     effect  = "Allow"
+#     actions = ["es:*"]
+#     principals {
+#       type        = "AWS"
+#       identifiers = ["*"]
+#     }
+#     resources = ["arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"]
+#   }
+# }
 
 module "bexh_verification_email_sns_lambda" {
   source = "./modules/bexh_sns_lambda_integration"

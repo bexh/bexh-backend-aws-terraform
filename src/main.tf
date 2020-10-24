@@ -293,23 +293,78 @@ data "aws_iam_policy_document" "this" {
 }
 
 // section: Email Integration
-resource "aws_lambda_function" "bexh_email" {
-  s3_bucket         = "bexh-lambda-deploy-develop-189266647936"
+# resource "aws_lambda_function" "bexh_email" {
+#   s3_bucket         = "bexh-lambda-deploy-develop-189266647936"
+#   s3_key            = "bexh-email-aws-lambda.zip"
+#   s3_object_version = var.bexh_email_lambda_s3_version
+#   function_name     = "bexh-verification-email"
+#   role              = aws_iam_role.bexh_emailer_lambda_role.arn
+#   handler           = "main.src.app.verification_email.service.handler"
+#   runtime           = "python3.8"
+#   timeout           = 600
+#   environment {
+#     variables = {
+#       ENV_NAME            = var.env_name
+#       LOG_LEVEL           = var.log_level
+#       TWILIO_API_KEY      = var.twilio_api_key
+#       BASE_URL            = var.base_url
+#       BEXH_EMAIL          = var.bexh_email
+#     }
+#   }
+# }
+
+# resource "aws_lambda_permission" "email_invoke_function" {
+#   statement_id  = "AllowSnsInvoke"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.bexh_email.function_name
+#   principal     = "sns.amazonaws.com"
+
+#   # The "/*/*" portion grants access from any method on any resource
+#   # within the API Gateway REST API.
+#   source_arn = aws_sns_topic.email_topic.arn
+# }
+
+# resource "aws_iam_role" "bexh_emailer_lambda_role" {
+#   name = "bexh-emailer-lambda-role"
+
+#   assume_role_policy = <<POLICY
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Action": "sts:AssumeRole",
+#       "Principal": {
+#         "Service": "lambda.amazonaws.com"
+#       },
+#       "Effect": "Allow",
+#       "Sid": ""
+#     }
+#   ]
+# }
+# POLICY
+# }
+
+# resource "aws_iam_role_policy_attachment" "emailer_basic_policy" {
+#   role       = aws_iam_role.bexh_emailer_lambda_role.name
+#   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+# }
+
+module "bexh_emailer_lambda" {
+  source = "./modules/bexh_lambda"
+
+  function_name     = "verification-email"
   s3_key            = "bexh-email-aws-lambda.zip"
   s3_object_version = var.bexh_email_lambda_s3_version
-  function_name     = "bexh-verification-email"
-  role              = aws_iam_role.bexh_emailer_lambda_role.arn
+  env_name          = var.env_name
+  account_id        = data.aws_caller_identity.current.account_id
   handler           = "main.src.app.verification_email.service.handler"
-  runtime           = "python3.8"
-  timeout           = 600
-  environment {
-    variables = {
-      ENV_NAME            = var.env_name
-      LOG_LEVEL           = var.log_level
-      TWILIO_API_KEY      = var.twilio_api_key
-      BASE_URL            = var.base_url
-      BEXH_EMAIL          = var.bexh_email
-    }
+  timeout           = 900
+  env_vars = {
+    ENV_NAME       = var.env_name
+    LOG_LEVEL      = var.log_level
+    TWILIO_API_KEY = var.twilio_api_key
+    BASE_URL       = var.base_url
+    BEXH_EMAIL     = var.bexh_email
   }
 }
 
@@ -319,8 +374,8 @@ resource "aws_sns_topic" "email_topic" {
 
 resource "aws_sns_topic_subscription" "invoke_with_sns" {
   topic_arn = aws_sns_topic.email_topic.arn
-  protocol = "lambda"
-  endpoint = aws_lambda_function.bexh_email.arn
+  protocol  = "lambda"
+  endpoint  = module.bexh_emailer_lambda.arn
 }
 
 resource "aws_sns_topic_policy" "default" {
@@ -369,38 +424,3 @@ data "aws_iam_policy_document" "sns_topic_policy" {
   }
 }
 
-resource "aws_lambda_permission" "email_invoke_function" {
-  statement_id  = "AllowSnsInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.bexh_email.function_name
-  principal     = "sns.amazonaws.com"
-
-  # The "/*/*" portion grants access from any method on any resource
-  # within the API Gateway REST API.
-  source_arn = aws_sns_topic.email_topic.arn
-}
-
-resource "aws_iam_role" "bexh_emailer_lambda_role" {
-  name = "bexh-emailer-lambda-role"
-
-  assume_role_policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-POLICY
-}
-
-resource "aws_iam_role_policy_attachment" "emailer_basic_policy" {
-  role       = aws_iam_role.bexh_emailer_lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}

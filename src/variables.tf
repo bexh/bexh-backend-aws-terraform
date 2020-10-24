@@ -5,12 +5,10 @@ variable "whitelisted_ips" {
 
 variable "bexh_api_lambda_s3_version" {
   type    = string
-  default = "9jUol62fQdOvh3_aSJR.S1C1GVFj.hIc"
 }
 
 variable "bexh_email_lambda_s3_version" {
   type = string
-  default = "_hI6k4hS0OrwDSLzspnrIu1atkSwo3MQ"
 }
 
 variable "env_name" {
@@ -44,7 +42,6 @@ variable "region" {
 variable "es_domain" {
   type        = string
   description = "ElasticSearch domain name"
-  default     = "bexh-autocomplete-dev"
 }
 
 variable "es_subnets" {

@@ -292,8 +292,8 @@ data "aws_iam_policy_document" "this" {
   }
 }
 
-# module "bexh_emailer_lambda" {
-#   source = "./modules/bexh_lambda"
+# module "bexh_verification_email_sns_lambda" {
+#   source = "./modules/bexh_sns_lambda_integration"
 
 #   function_name     = "verification-email"
 #   s3_key            = "bexh-email-aws-lambda.zip"
@@ -309,92 +309,27 @@ data "aws_iam_policy_document" "this" {
 #     BASE_URL       = var.base_url
 #     BEXH_EMAIL     = var.bexh_email
 #   }
+
+#   sns_topic_name = "verification-email"
 # }
 
-# resource "aws_lambda_permission" "email_invoke_function" {
-#   statement_id  = "AllowSnsInvoke"
-#   action        = "lambda:InvokeFunction"
-#   function_name = module.bexh_emailer_lambda.aws_lambda_function.function_name
-#   principal     = "sns.amazonaws.com"
+# module "bexh_bet_status_change_sns_lambda" {
+#   source = "./modules/bexh_sns_lambda_integration"
 
-#   # The "/*/*" portion grants access from any method on any resource
-#   # within the API Gateway REST API.
-#   source_arn = aws_sns_topic.email_topic.arn
-# }
-
-# resource "aws_sns_topic" "email_topic" {
-#   name = "bexh-email-handler-topic"
-# }
-
-# resource "aws_sns_topic_subscription" "invoke_with_sns" {
-#   topic_arn = aws_sns_topic.email_topic.arn
-#   protocol  = "lambda"
-#   endpoint  = module.bexh_emailer_lambda.aws_lambda_function.arn
-# }
-
-# resource "aws_sns_topic_policy" "default" {
-#   arn = aws_sns_topic.email_topic.arn
-
-#   policy = data.aws_iam_policy_document.sns_topic_policy.json
-# }
-
-# data "aws_iam_policy_document" "sns_topic_policy" {
-#   policy_id = "__default_policy_ID"
-
-#   statement {
-#     actions = [
-#       "SNS:Subscribe",
-#       # "SNS:SetTopicAttributes",
-#       # "SNS:RemovePermission",
-#       "SNS:Receive",
-#       "SNS:Publish",
-#       # "SNS:ListSubscriptionsByTopic",
-#       # "SNS:GetTopicAttributes",
-#       # "SNS:DeleteTopic",
-#       # "SNS:AddPermission",
-#     ]
-
-#     condition {
-#       test     = "StringEquals"
-#       variable = "AWS:SourceOwner"
-
-#       values = [
-#         data.aws_caller_identity.current.account_id,
-#       ]
-#     }
-
-#     effect = "Allow"
-
-#     principals {
-#       type        = "AWS"
-#       identifiers = ["*"]
-#     }
-
-#     resources = [
-#       aws_sns_topic.email_topic.arn,
-#     ]
-
-#     sid = "__default_statement_ID"
+#   function_name     = "bet-status-change-email"
+#   s3_key            = "bexh-email-aws-lambda.zip"
+#   s3_object_version = var.bexh_email_lambda_s3_version
+#   env_name          = var.env_name
+#   account_id        = data.aws_caller_identity.current.account_id
+#   handler           = "main.src.app.bet_status_change_email.service.handler"
+#   timeout           = 900
+#   env_vars = {
+#     ENV_NAME       = var.env_name
+#     LOG_LEVEL      = var.log_level
+#     TWILIO_API_KEY = var.twilio_api_key
+#     BASE_URL       = var.base_url
+#     BEXH_EMAIL     = var.bexh_email
 #   }
+
+#   sns_topic_name = "bet-status-change-email"
 # }
-
-module "bexh_emailer_sns_lambda" {
-  source = "./modules/bexh_sns_lambda_integration"
-
-  function_name     = "verification-email"
-  s3_key            = "bexh-email-aws-lambda.zip"
-  s3_object_version = var.bexh_email_lambda_s3_version
-  env_name          = var.env_name
-  account_id        = data.aws_caller_identity.current.account_id
-  handler           = "main.src.app.verification_email.service.handler"
-  timeout           = 900
-  env_vars = {
-    ENV_NAME       = var.env_name
-    LOG_LEVEL      = var.log_level
-    TWILIO_API_KEY = var.twilio_api_key
-    BASE_URL       = var.base_url
-    BEXH_EMAIL     = var.bexh_email
-  }
-
-  sns_topic_name = "verification-email"
-}

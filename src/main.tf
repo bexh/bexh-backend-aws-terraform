@@ -128,6 +128,9 @@ resource "aws_lambda_function" "bexh_api_proxy_post" {
       TOKEN_TABLE_NAME    = aws_dynamodb_table.this.name
       MYSQL_HOST_URL      = aws_db_instance.this.address
       MYSQL_DATABASE_NAME = aws_db_instance.this.name
+      BET_STATUS_CHANGE_EMAIL_SNS_TOPIC = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
+      VERIFICATION_EMAIL_SNS_TOPIC = module.bexh_verification_email_sns_lambda.aws_sns_topic.arn
+      EXCHANGE_BET_KINESIS_STREAM = aws_kinesis_stream.this.name
     }
   }
 }
@@ -332,4 +335,10 @@ module "bexh_bet_status_change_sns_lambda" {
   }
 
   sns_topic_name = "bet-status-change-email"
+}
+
+// region: Kinesis Lambda Integration
+resource "aws_kinesis_stream" "this" {
+  name             = "bexh-exchange-bet-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  shard_count      = 1
 }

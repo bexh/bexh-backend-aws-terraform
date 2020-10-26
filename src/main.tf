@@ -358,6 +358,31 @@ module "bexh_bet_submit_lambda" {
   }
 }
 
+resource "aws_iam_policy" "bet_submit_kinesis_policy" {
+  name        = "bexh-bet-submit-kinesis-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  description = "Allows kinesis to invoke lambda"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "kinesis:*"
+      ],
+      "Effect": "Allow",
+      "Resource": "${aws_kinesis_stream.this.arn}"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "kinesis_lambda" {
+  role       = module.bexh_bet_submit_lambda.aws_iam_role.name
+  policy_arn = aws_iam_policy.bet_submit_kinesis_policy.arn
+}
+
 resource "aws_lambda_event_source_mapping" "this" {
   event_source_arn  = aws_kinesis_stream.this.arn
   function_name     = module.bexh_bet_submit_lambda.aws_lambda_function.arn

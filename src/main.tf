@@ -358,7 +358,8 @@ module "bexh_bet_submit_lambda" {
   }
 }
 
-resource "aws_lambda_event_source_mapping" "example" {
-  event_source_arn = aws_kinesis_stream.this.arn
-  function_name    = module.bexh_bet_submit_lambda.aws_lambda_function.arn
+resource "aws_lambda_event_source_mapping" "this" {
+  event_source_arn  = aws_kinesis_stream.this.arn
+  function_name     = module.bexh_bet_submit_lambda.aws_lambda_function.arn
+  starting_position = "LATEST"
 }

@@ -123,14 +123,14 @@ resource "aws_lambda_function" "bexh_api_proxy_post" {
   timeout           = 60
   environment {
     variables = {
-      ENV_NAME            = var.env_name
-      LOG_LEVEL           = var.log_level
-      TOKEN_TABLE_NAME    = aws_dynamodb_table.this.name
-      MYSQL_HOST_URL      = aws_db_instance.this.address
-      MYSQL_DATABASE_NAME = aws_db_instance.this.name
+      ENV_NAME                          = var.env_name
+      LOG_LEVEL                         = var.log_level
+      TOKEN_TABLE_NAME                  = aws_dynamodb_table.this.name
+      MYSQL_HOST_URL                    = aws_db_instance.this.address
+      MYSQL_DATABASE_NAME               = aws_db_instance.this.name
       BET_STATUS_CHANGE_EMAIL_SNS_TOPIC = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
-      VERIFICATION_EMAIL_SNS_TOPIC = module.bexh_verification_email_sns_lambda.aws_sns_topic.arn
-      EXCHANGE_BET_KINESIS_STREAM = aws_kinesis_stream.this.name
+      VERIFICATION_EMAIL_SNS_TOPIC      = module.bexh_verification_email_sns_lambda.aws_sns_topic.arn
+      EXCHANGE_BET_KINESIS_STREAM       = aws_kinesis_stream.this.name
     }
   }
 }
@@ -339,6 +339,26 @@ module "bexh_bet_status_change_sns_lambda" {
 
 // region: Kinesis Lambda Integration
 resource "aws_kinesis_stream" "this" {
-  name             = "bexh-exchange-bet-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  shard_count      = 1
+  name        = "bexh-exchange-bet-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  shard_count = 1
+}
+
+module "bexh_bet_submit_lambda" {
+  source = "./modules/bexh_lambda"
+
+  function_name     = "bet-submit"
+  s3_key            = "bexh-bet-submit-aws-lambda.zip"
+  s3_object_version = var.bexh_bet_submit_lambda_s3_version
+  env_name          = var.env_name
+  account_id        = data.aws_caller_identity.current.account_id
+  handler           = "main.src.service.handler"
+  env_vars = {
+    ENV_NAME  = var.env_name
+    LOG_LEVEL = var.log_level
+  }
+}
+
+resource "aws_lambda_event_source_mapping" "example" {
+  event_source_arn = aws_kinesis_stream.this.arn
+  function_name    = module.bexh_bet_submit_lambda.aws_lambda_function.arn
 }

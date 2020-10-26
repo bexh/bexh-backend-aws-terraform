@@ -11,6 +11,11 @@ variable "bexh_email_lambda_s3_version" {
   type = string
 }
 
+variable "bexh_bet_submit_lambda_s3_version" {
+  type = string
+  default = ""
+}
+
 variable "env_name" {
   type    = string
   default = "dev"

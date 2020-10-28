@@ -517,7 +517,9 @@ resource "aws_iam_policy" "ecs-task-definition-policy" {
     "Statement": [
     {
         "Effect": "Allow",
-        "Action": [],
+        "Action": [
+          "dynamodb:*"
+        ],
         "Resource": "*"
         }
     ]

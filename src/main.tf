@@ -471,6 +471,7 @@ resource "aws_ecs_service" "main" {
   task_definition = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
   desired_count   = 1
   launch_type     = "FARGATE"
+  force_new_deployment = true
 
   network_configuration {
     security_groups = ["${aws_security_group.ecs_sg.id}"]

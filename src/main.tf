@@ -443,8 +443,8 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "0.25 vCPU"
   memory                   = "0.5GB"
-  task_role_arn            = aws_iam_role.ecs-task-definition-role.arn
-  execution_role_arn = aws_iam_role.ecs-task-execution-role.arn
+  # task_role_arn            = aws_iam_role.ecs-task-definition-role.arn
+  # execution_role_arn = aws_iam_role.ecs-task-execution-role.arn
 
   container_definitions = <<DEFINITION
 [
@@ -479,52 +479,52 @@ resource "aws_ecs_service" "main" {
   }
 }
 
-resource "aws_iam_role" "ecs-task-execution-role" {
-    name                = "ecs-task-execution-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-    assume_role_policy  = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
-}
+# resource "aws_iam_role" "ecs-task-execution-role" {
+#     name                = "ecs-task-execution-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+#     assume_role_policy  = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
+# }
 
-resource "aws_iam_role_policy_attachment" "ecs-execution-role-attachment" {
-    role       = aws_iam_role.ecs-task-execution-role.name
-    policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
+# resource "aws_iam_role_policy_attachment" "ecs-execution-role-attachment" {
+#     role       = aws_iam_role.ecs-task-execution-role.name
+#     policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+# }
 
-data "aws_iam_policy_document" "ecs-assume-role-policy-doc" {
-    statement {
-        actions = ["sts:AssumeRole"]
+# data "aws_iam_policy_document" "ecs-assume-role-policy-doc" {
+#     statement {
+#         actions = ["sts:AssumeRole"]
 
-        principals {
-            type        = "Service"
-            identifiers = ["ecs.amazonaws.com"]
-        }
-    }
-}
+#         principals {
+#             type        = "Service"
+#             identifiers = ["ecs.amazonaws.com"]
+#         }
+#     }
+# }
 
-resource "aws_iam_role" "ecs-task-definition-role" {
-    name                = "ecs-task-definition-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-    assume_role_policy  = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
-}
+# resource "aws_iam_role" "ecs-task-definition-role" {
+#     name                = "ecs-task-definition-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+#     assume_role_policy  = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
+# }
 
-resource "aws_iam_role_policy_attachment" "ecs-service-role-attachment" {
-    role       = aws_iam_role.ecs-task-definition-role.name
-    policy_arn = aws_iam_policy.ecs-task-definition-policy.arn
-}
+# resource "aws_iam_role_policy_attachment" "ecs-service-role-attachment" {
+#     role       = aws_iam_role.ecs-task-definition-role.name
+#     policy_arn = aws_iam_policy.ecs-task-definition-policy.arn
+# }
 
-resource "aws_iam_policy" "ecs-task-definition-policy" {
-  name = "bexh-service-policy-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+# resource "aws_iam_policy" "ecs-task-definition-policy" {
+#   name = "bexh-service-policy-${var.env_name}-${data.aws_caller_identity.current.account_id}"
 
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-    {
-        "Effect": "Allow",
-        "Action": [
-          "dynamodb:*"
-        ],
-        "Resource": "*"
-        }
-    ]
-}
-EOF
-}
+#   policy = <<EOF
+# {
+#     "Version": "2012-10-17",
+#     "Statement": [
+#     {
+#         "Effect": "Allow",
+#         "Action": [
+#           "dynamodb:*"
+#         ],
+#         "Resource": "*"
+#         }
+#     ]
+# }
+# EOF
+# }

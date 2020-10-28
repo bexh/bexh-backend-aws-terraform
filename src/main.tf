@@ -392,11 +392,7 @@ resource "aws_lambda_event_source_mapping" "this" {
 // section: ECS Fargate Configuration
 
 // subsection: ecs service role
-# resource "aws_iam_role" "ecs-service-role" {
-#     name                = "ecs-service-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-#     path                = "/"
-#     assume_role_policy  = "${data.aws_iam_policy_document.ecs-service-policy.json}"
-# }
+
 
 # resource "aws_iam_role_policy_attachment" "ecs-service-role-attachment" {
 #     role       = "${aws_iam_role.ecs-service-role.name}"
@@ -447,6 +443,7 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "0.25 vCPU"
   memory                   = "0.5GB"
+  task_role_arn            = aws_iam_role.ecs-service-role.arn
 
   container_definitions = <<DEFINITION
 [
@@ -477,4 +474,50 @@ resource "aws_ecs_service" "main" {
     security_groups = ["${aws_security_group.ecs_sg.id}"]
     subnets         = var.es_subnets
   }
+}
+
+resource "aws_iam_role" "ecs-service-role" {
+    name                = "ecs-service-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+    path                = "/"
+    assume_role_policy  = data.aws_iam_policy_document.ecs-service-policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "ecs-service-role-attachment" {
+    role       = aws_iam_role.ecs-service-role.name
+    policy_arn = aws_iam_policy.ecs-service-role-policy.arn
+}
+
+data "aws_iam_policy_document" "ecs-service-policy" {
+    statement {
+        actions = ["sts:AssumeRole"]
+
+        principals {
+            type        = "Service"
+            identifiers = ["ecs.amazonaws.com"]
+        }
+    }
+}
+
+resource "aws_iam_policy" "ecs-service-role-policy" {
+  name = "bexh-service-policy-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+    {
+        "Effect": "Allow",
+        "Action": [
+            "ecr:GetAuthorizationToken",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:BatchGetImage",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
 }

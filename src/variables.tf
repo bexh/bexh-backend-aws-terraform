@@ -80,4 +80,5 @@ variable "bexh_email" {
 variable "connector_image_tag" {
   type = string
   description = "tag of bexh connector from ecr image"
+  default = "4a6687de046e3efe2bdb528e0074fc8687841130"
 }

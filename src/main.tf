@@ -467,7 +467,8 @@ DEFINITION
 resource "aws_ecs_service" "main" {
   name            = "bexh-ecs-service-${var.env_name}-${data.aws_caller_identity.current.account_id}"
   cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.app.arn
+  # task_definition = aws_ecs_task_definition.app.arn
+  task_definition = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
   desired_count   = 1
   launch_type     = "FARGATE"
 

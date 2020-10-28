@@ -388,3 +388,90 @@ resource "aws_lambda_event_source_mapping" "this" {
   function_name     = module.bexh_bet_submit_lambda.aws_lambda_function.arn
   starting_position = "LATEST"
 }
+
+// section: ECS Fargate Configuration
+
+// subsection: ecs service role
+# resource "aws_iam_role" "ecs-service-role" {
+#     name                = "ecs-service-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+#     path                = "/"
+#     assume_role_policy  = "${data.aws_iam_policy_document.ecs-service-policy.json}"
+# }
+
+# resource "aws_iam_role_policy_attachment" "ecs-service-role-attachment" {
+#     role       = "${aws_iam_role.ecs-service-role.name}"
+#     policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole"
+# }
+
+# data "aws_iam_policy_document" "ecs-service-policy" {
+#     statement {
+#         actions = ["sts:AssumeRole"]
+
+#         principals {
+#             type        = "Service"
+#             identifiers = ["ecs.amazonaws.com"]
+#         }
+#     }
+# }
+
+// Section: ECS
+
+resource "aws_security_group" "ecs_sg" {
+  name        = "bexh-connector-sg-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  description = "Connector ecs sg"
+
+  ingress {
+    description = "All inbound from sg"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_ecs_cluster" "main" {
+  name = "bexh-connector-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_ecs_task_definition" "app" {
+  family                   = "app"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "0.25 vCPU"
+  memory                   = "0.5GB"
+
+  container_definitions = <<DEFINITION
+[
+  {
+    "cpu": 128,
+    "environment": [{}],
+    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}",
+    "memory": 128,
+    "name": "app",
+    "networkMode": "awsvpc",
+    "portMappings": []
+  }
+]
+DEFINITION
+}
+
+resource "aws_ecs_service" "main" {
+  name            = "bexh-ecs-service-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.app.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    security_groups = ["${aws_security_group.ecs_sg.id}"]
+    subnets         = var.es_subnets
+  }
+}

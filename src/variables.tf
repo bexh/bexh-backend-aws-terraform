@@ -76,3 +76,8 @@ variable "bexh_email" {
   description = "Sender email address for mailer lambda"
   default = "bexh.dev@gmail.com"
 }
+
+variable "connector_image_tag" {
+  type = string
+  description = "tag of bexh connector from ecr image"
+}

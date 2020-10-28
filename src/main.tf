@@ -443,7 +443,7 @@ resource "aws_ecs_task_definition" "app" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "0.25 vCPU"
   memory                   = "0.5GB"
-  task_role_arn            = aws_iam_role.ecs-task-execution-role.arn
+  task_role_arn            = aws_iam_role.ecs-task-definition-role.arn
   execution_role_arn = aws_iam_role.ecs-task-execution-role.arn
 
   container_definitions = <<DEFINITION

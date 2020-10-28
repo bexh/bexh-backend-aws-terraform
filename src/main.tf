@@ -452,7 +452,10 @@ resource "aws_ecs_task_definition" "app" {
 [
   {
     "cpu": 128,
-    "environment": [{}],
+    "environment": [{
+        "name": "FOO",
+        "value": "bar"
+      }],
     "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}",
     "memory": 128,
     "name": "app",

@@ -421,63 +421,63 @@ resource "aws_security_group" "ecs_sg" {
   }
 }
 
-resource "aws_ecs_cluster" "main" {
-  name = "bexh-connector-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-}
+# resource "aws_ecs_cluster" "main" {
+#   name = "bexh-connector-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+# }
 
-resource "aws_ecs_task_definition" "app" {
-  family                   = "app"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "512"
-  memory                   = "1024"
-  task_role_arn            = aws_iam_role.ecs_task_definition_role.arn
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+# resource "aws_ecs_task_definition" "app" {
+#   family                   = "app"
+#   network_mode             = "awsvpc"
+#   requires_compatibilities = ["FARGATE"]
+#   cpu                      = "512"
+#   memory                   = "1024"
+#   task_role_arn            = aws_iam_role.ecs_task_definition_role.arn
+#   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
-  container_definitions = <<DEFINITION
-[
-  {
-    "cpu": 128,
-    "environment": [{
-        "name": "FOO",
-        "value": "bar"
-      }],
-    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}",
-    "memory": 128,
-    "name": "app",
-    "networkMode": "awsvpc",
-    "portMappings": [],
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": "/ecs/bexh-connector-${var.env_name}-${data.aws_caller_identity.current.account_id}",
-        "awslogs-region": "us-east-1",
-        "awslogs-stream-prefix": "ecs" 
-      }
-    }
-  }
-]
-DEFINITION
-}
+#   container_definitions = <<DEFINITION
+# [
+#   {
+#     "cpu": 128,
+#     "environment": [{
+#         "name": "FOO",
+#         "value": "bar"
+#       }],
+#     "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}",
+#     "memory": 128,
+#     "name": "app",
+#     "networkMode": "awsvpc",
+#     "portMappings": [],
+#     "logConfiguration": {
+#       "logDriver": "awslogs",
+#       "options": {
+#         "awslogs-group": "/ecs/bexh-connector-${var.env_name}-${data.aws_caller_identity.current.account_id}",
+#         "awslogs-region": "us-east-1",
+#         "awslogs-stream-prefix": "ecs" 
+#       }
+#     }
+#   }
+# ]
+# DEFINITION
+# }
 
-resource "aws_ecs_service" "main" {
-  name    = "bexh-ecs-service-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  cluster = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.app.arn
-  # task_definition      = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
-  desired_count        = 1
-  launch_type          = "FARGATE"
-  force_new_deployment = true
+# resource "aws_ecs_service" "main" {
+#   name    = "bexh-ecs-service-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+#   cluster = aws_ecs_cluster.main.id
+#   task_definition = aws_ecs_task_definition.app.arn
+#   # task_definition      = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
+#   desired_count        = 1
+#   launch_type          = "FARGATE"
+#   force_new_deployment = true
 
-  network_configuration {
-    security_groups = ["${aws_security_group.ecs_sg.id}"]
-    subnets         = var.es_subnets
-    # TODO: remove this after setting up privatelink
-    assign_public_ip = true
-  }
+#   network_configuration {
+#     security_groups = ["${aws_security_group.ecs_sg.id}"]
+#     subnets         = var.es_subnets
+#     # TODO: remove this after setting up privatelink
+#     assign_public_ip = true
+#   }
 
-  depends_on = [aws_iam_policy.ecs_task_definition_policy]
-}
+#   depends_on = [aws_iam_policy.ecs_task_definition_policy]
+# }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
   name               = "ecs-task-execution-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"

@@ -391,103 +391,82 @@ resource "aws_lambda_event_source_mapping" "this" {
 
 // section: ECS Fargate Configuration
 
-// subsection: ecs service role
+# resource "aws_security_group" "ecs_sg" {
+#   name        = "bexh-connector-sg-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+#   description = "Connector ecs sg"
 
+#   ingress {
+#     description = "All inbound from sg"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     self        = true
+#   }
 
-# resource "aws_iam_role_policy_attachment" "ecs-service-role-attachment" {
-#     role       = "${aws_iam_role.ecs-service-role.name}"
-#     policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole"
+#   egress {
+#     description = "All outbound"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 # }
 
-# data "aws_iam_policy_document" "ecs-service-policy" {
-#     statement {
-#         actions = ["sts:AssumeRole"]
-
-#         principals {
-#             type        = "Service"
-#             identifiers = ["ecs.amazonaws.com"]
-#         }
-#     }
+# resource "aws_ecs_cluster" "main" {
+#   name = "bexh-connector-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
 # }
 
-// Section: ECS
+# resource "aws_ecs_task_definition" "app" {
+#   family                   = "app"
+#   network_mode             = "awsvpc"
+#   requires_compatibilities = ["FARGATE"]
+#   cpu                      = "0.25 vCPU"
+#   memory                   = "0.5GB"
+#   task_role_arn            = aws_iam_role.ecs_task_definition_role.arn
+#   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
-resource "aws_security_group" "ecs_sg" {
-  name        = "bexh-connector-sg-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  description = "Connector ecs sg"
+#   container_definitions = <<DEFINITION
+# [
+#   {
+#     "cpu": 128,
+#     "environment": [{
+#         "name": "FOO",
+#         "value": "bar"
+#       }],
+#     "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}",
+#     "memory": 128,
+#     "name": "app",
+#     "networkMode": "awsvpc",
+#     "portMappings": []
+#   }
+# ]
+# DEFINITION
+# }
 
-  ingress {
-    description = "All inbound from sg"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
-  }
+# resource "aws_ecs_service" "main" {
+#   name    = "bexh-ecs-service-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+#   cluster = aws_ecs_cluster.main.id
+#   # task_definition = aws_ecs_task_definition.app.arn
+#   task_definition      = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
+#   desired_count        = 1
+#   launch_type          = "FARGATE"
+#   force_new_deployment = true
 
-  egress {
-    description = "All outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
+#   network_configuration {
+#     security_groups = ["${aws_security_group.ecs_sg.id}"]
+#     subnets         = var.es_subnets
+#   }
 
-resource "aws_ecs_cluster" "main" {
-  name = "bexh-connector-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-}
+#   depends_on = [aws_iam_policy.ecs-task-definition-policy]
+# }
 
-resource "aws_ecs_task_definition" "app" {
-  family                   = "app"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "0.25 vCPU"
-  memory                   = "0.5GB"
-  task_role_arn            = aws_iam_role.ecs-task-definition-role.arn
-  execution_role_arn       = aws_iam_role.ecs-task-execution-role.arn
-
-  container_definitions = <<DEFINITION
-[
-  {
-    "cpu": 128,
-    "environment": [{
-        "name": "FOO",
-        "value": "bar"
-      }],
-    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}",
-    "memory": 128,
-    "name": "app",
-    "networkMode": "awsvpc",
-    "portMappings": []
-  }
-]
-DEFINITION
-}
-
-resource "aws_ecs_service" "main" {
-  name    = "bexh-ecs-service-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  cluster = aws_ecs_cluster.main.id
-  # task_definition = aws_ecs_task_definition.app.arn
-  task_definition      = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
-  desired_count        = 1
-  launch_type          = "FARGATE"
-  force_new_deployment = true
-
-  network_configuration {
-    security_groups = ["${aws_security_group.ecs_sg.id}"]
-    subnets         = var.es_subnets
-  }
-
-  depends_on = [aws_iam_policy.ecs-task-definition-policy]
-}
-
-resource "aws_iam_role" "ecs-task-execution-role" {
+resource "aws_iam_role" "ecs_task_execution_role" {
   name               = "ecs-task-execution-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
   assume_role_policy = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
 }
 
-resource "aws_iam_role_policy_attachment" "ecs-execution-role-attachment" {
-  role       = aws_iam_role.ecs-task-execution-role.name
+resource "aws_iam_role_policy_attachment" "ecs_execution_role_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
@@ -502,13 +481,13 @@ data "aws_iam_policy_document" "ecs-assume-role-policy-doc" {
   }
 }
 
-resource "aws_iam_role" "ecs-task-definition-role" {
+resource "aws_iam_role" "ecs_task_definition_role" {
   name               = "ecs-task-definition-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
   assume_role_policy = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
 }
 
-resource "aws_iam_role_policy_attachment" "ecs-service-role-attachment" {
-  role       = aws_iam_role.ecs-task-definition-role.name
+resource "aws_iam_role_policy_attachment" "ecs_service_role_attachment" {
+  role       = aws_iam_role.ecs_task_definition_role.name
   policy_arn = aws_iam_policy.ecs-task-definition-policy.arn
 }
 

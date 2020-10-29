@@ -403,6 +403,23 @@ resource "aws_security_group" "ecs_sg" {
     self        = true
   }
 
+  # TODO: replace this with privatelink https://aws.amazon.com/blogs/compute/setting-up-aws-privatelink-for-amazon-ecs-and-amazon-ecr/
+  ingress {
+    description = "Http inbound for ecr"
+    from_port = -1
+    to_port = -1
+    protocol = "http"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Https inbound for ecr"
+    from_port = -1
+    to_port = -1
+    protocol = "https"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     description = "All outbound"
     from_port   = 0
@@ -420,8 +437,8 @@ resource "aws_ecs_task_definition" "app" {
   family                   = "app"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "0.25 vCPU"
-  memory                   = "0.5GB"
+  cpu                      = "512"
+  memory                   = "1024"
   task_role_arn            = aws_iam_role.ecs_task_definition_role.arn
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
@@ -437,7 +454,15 @@ resource "aws_ecs_task_definition" "app" {
     "memory": 128,
     "name": "app",
     "networkMode": "awsvpc",
-    "portMappings": []
+    "portMappings": [],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/bexh-connector-${var.env_name}-${data.aws_caller_identity.current.account_id}",
+        "awslogs-region": "us-east-1",
+        "awslogs-stream-prefix": "ecs" 
+      }
+    }
   }
 ]
 DEFINITION
@@ -462,7 +487,7 @@ resource "aws_ecs_service" "main" {
 
 resource "aws_iam_role" "ecs_task_execution_role" {
   name               = "ecs-task-execution-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  assume_role_policy = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
+  assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy_doc.json
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_execution_role_attachment" {
@@ -470,7 +495,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_role_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-data "aws_iam_policy_document" "ecs-assume-role-policy-doc" {
+data "aws_iam_policy_document" "ecs_assume_role_policy_doc" {
   statement {
     actions = ["sts:AssumeRole"]
 
@@ -483,7 +508,7 @@ data "aws_iam_policy_document" "ecs-assume-role-policy-doc" {
 
 resource "aws_iam_role" "ecs_task_definition_role" {
   name               = "ecs-task-definition-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  assume_role_policy = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
+  assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy_doc.json
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_service_role_attachment" {

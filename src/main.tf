@@ -458,6 +458,12 @@ resource "aws_ecs_task_definition" "app" {
   }
 ]
 DEFINITION
+
+  depends_on = [aws_cloudwatch_log_group.ecs_connector]
+}
+
+resource "aws_cloudwatch_log_group" "ecs_connector" {
+  name = "/ecs/bexh-connector-${var.env_name}-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_ecs_service" "main" {

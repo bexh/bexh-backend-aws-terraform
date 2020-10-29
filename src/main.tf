@@ -457,55 +457,55 @@ resource "aws_lambda_event_source_mapping" "this" {
 #     subnets         = var.es_subnets
 #   }
 
-#   depends_on = [aws_iam_policy.ecs-task-definition-policy]
+#   depends_on = [aws_iam_policy.ecs_task_definition_policy]
 # }
 
-# resource "aws_iam_role" "ecs_task_execution_role" {
-#   name               = "ecs-task-execution-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-#   assume_role_policy = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
-# }
+resource "aws_iam_role" "ecs_task_execution_role" {
+  name               = "ecs-task-execution-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  assume_role_policy = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
+}
 
-# resource "aws_iam_role_policy_attachment" "ecs_execution_role_attachment" {
-#   role       = aws_iam_role.ecs_task_execution_role.name
-#   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-# }
+resource "aws_iam_role_policy_attachment" "ecs_execution_role_attachment" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
 
-# data "aws_iam_policy_document" "ecs-assume-role-policy-doc" {
-#   statement {
-#     actions = ["sts:AssumeRole"]
+data "aws_iam_policy_document" "ecs-assume-role-policy-doc" {
+  statement {
+    actions = ["sts:AssumeRole"]
 
-#     principals {
-#       type        = "Service"
-#       identifiers = ["ecs.amazonaws.com"]
-#     }
-#   }
-# }
+    principals {
+      type        = "Service"
+      identifiers = ["ecs.amazonaws.com"]
+    }
+  }
+}
 
-# resource "aws_iam_role" "ecs_task_definition_role" {
-#   name               = "ecs-task-definition-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-#   assume_role_policy = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
-# }
+resource "aws_iam_role" "ecs_task_definition_role" {
+  name               = "ecs-task-definition-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  assume_role_policy = data.aws_iam_policy_document.ecs-assume-role-policy-doc.json
+}
 
-# resource "aws_iam_role_policy_attachment" "ecs_service_role_attachment" {
-#   role       = aws_iam_role.ecs_task_definition_role.name
-#   policy_arn = aws_iam_policy.ecs-task-definition-policy.arn
-# }
+resource "aws_iam_role_policy_attachment" "ecs_service_role_attachment" {
+  role       = aws_iam_role.ecs_task_definition_role.name
+  policy_arn = aws_iam_policy.ecs_task_definition_policy.arn
+}
 
-# resource "aws_iam_policy" "ecs-task-definition-policy" {
-#   name = "bexh-service-policy-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+resource "aws_iam_policy" "ecs_task_definition_policy" {
+  name = "bexh-service-policy-${var.env_name}-${data.aws_caller_identity.current.account_id}"
 
-#   policy = <<EOF
-# {
-#     "Version": "2012-10-17",
-#     "Statement": [
-#     {
-#         "Effect": "Allow",
-#         "Action": [
-#           "dynamodb:*"
-#         ],
-#         "Resource": "*"
-#         }
-#     ]
-# }
-# EOF
-# }
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+    {
+        "Effect": "Allow",
+        "Action": [
+          "dynamodb:*"
+        ],
+        "Resource": "*"
+        }
+    ]
+}
+EOF
+}

@@ -412,14 +412,6 @@ resource "aws_security_group" "ecs_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    description = "Https inbound for ecr"
-    from_port = -1
-    to_port = -1
-    protocol = "https"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   egress {
     description = "All outbound"
     from_port   = 0

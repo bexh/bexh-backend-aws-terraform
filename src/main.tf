@@ -450,7 +450,7 @@ resource "aws_ecs_service" "main" {
   # task_definition      = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
   desired_count        = 1
   launch_type          = "FARGATE"
-  # force_new_deployment = true
+  force_new_deployment = true
 
   network_configuration {
     security_groups = ["${aws_security_group.ecs_sg.id}"]
@@ -476,7 +476,7 @@ data "aws_iam_policy_document" "ecs-assume-role-policy-doc" {
 
     principals {
       type        = "Service"
-      identifiers = ["ecs.amazonaws.com"]
+      identifiers = ["ecs-tasks.amazonaws.com"]
     }
   }
 }

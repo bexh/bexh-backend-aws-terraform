@@ -472,6 +472,7 @@ resource "aws_ecs_service" "main" {
   network_configuration {
     security_groups = ["${aws_security_group.ecs_sg.id}"]
     subnets         = var.es_subnets
+    assign_public_ip = true
   }
 
   depends_on = [aws_iam_policy.ecs_task_definition_policy]

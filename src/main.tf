@@ -406,9 +406,9 @@ resource "aws_security_group" "ecs_sg" {
   # TODO: replace this with privatelink https://aws.amazon.com/blogs/compute/setting-up-aws-privatelink-for-amazon-ecs-and-amazon-ecr/
   ingress {
     description = "Http inbound for ecr"
-    from_port = -1
-    to_port = -1
-    protocol = "http"
+    from_port = 80
+    to_port = 80
+    protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -472,6 +472,7 @@ resource "aws_ecs_service" "main" {
   network_configuration {
     security_groups = ["${aws_security_group.ecs_sg.id}"]
     subnets         = var.es_subnets
+    # TODO: remove this after setting up privatelink
     assign_public_ip = true
   }
 

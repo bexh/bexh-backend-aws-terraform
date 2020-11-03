@@ -59,15 +59,16 @@ resource "aws_security_group" "rds_sg" {
 }
 
 resource "aws_rds_cluster" "this" {
-  engine_mode            = "serverless"
-  engine                 = "aurora-mysql"
-  engine_version         = "5.7.mysql_aurora.2.07.2"
-  cluster_identifier     = "bexh-ods-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  database_name          = "BexhOdsDb"
-  master_username        = local.db_creds.username
-  master_password        = local.db_creds.password
-  db_cluster_parameter_group_name   = "default.aurora-mysql5.7"
-  vpc_security_group_ids = ["${aws_security_group.rds_sg.id}"]
+  engine_mode                     = "serverless"
+  engine                          = "aurora-mysql"
+  engine_version                  = "5.7.mysql_aurora.2.07.2"
+  cluster_identifier              = "bexh-ods-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  database_name                   = "BexhOdsDb"
+  master_username                 = local.db_creds.username
+  master_password                 = local.db_creds.password
+  db_cluster_parameter_group_name = "default.aurora-mysql5.7"
+  vpc_security_group_ids          = ["${aws_security_group.rds_sg.id}"]
+  enable_http_endpoint            = true
 
   scaling_configuration {
     auto_pause               = true

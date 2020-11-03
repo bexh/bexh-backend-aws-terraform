@@ -61,7 +61,7 @@ resource "aws_security_group" "rds_sg" {
 resource "aws_rds_cluster" "this" {
   engine_mode                     = "serverless"
   engine                          = "aurora-mysql"
-  engine_version                  = "5.7.mysql_aurora.2.07.2"
+  engine_version                  = "5.7.mysql_aurora.2.07.1"
   cluster_identifier              = "bexh-ods-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
   database_name                   = "BexhOdsDb"
   master_username                 = local.db_creds.username

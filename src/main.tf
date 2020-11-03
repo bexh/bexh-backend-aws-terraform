@@ -58,23 +58,26 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-resource "aws_db_instance" "this" {
-  allocated_storage      = 5
-  storage_type           = "gp2"
-  engine                 = "mysql"
-  engine_version         = "8.0.17"
-  instance_class         = "db.t2.micro"
-  name                   = "BexhBackendDbMain"
-  username               = local.db_creds.username
-  password               = local.db_creds.password
-  parameter_group_name   = "default.mysql8.0"
-  publicly_accessible    = true
-  skip_final_snapshot    = true
+resource "aws_rds_cluster" "this" {
+  engine_mode            = "serverless"
+  engine                 = "aurora-mysql"
+  engine_version         = "5.7.mysql_aurora.2.07.2"
+  cluster_identifier     = "bexh-ods-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  database_name          = "bexh-ods-db-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  master_username        = local.db_creds.username
+  master_password        = local.db_creds.password
+  db_cluster_parameter_group_name   = "default.aurora-mysql5.7"
   vpc_security_group_ids = ["${aws_security_group.rds_sg.id}"]
+
+  scaling_configuration {
+    auto_pause               = true
+    max_capacity             = 8
+    seconds_until_auto_pause = 300
+  }
 }
 
 resource "null_resource" "setup_db" {
-  depends_on = [aws_db_instance.this] #wait for the db to be ready
+  depends_on = [aws_rds_cluster.this] #wait for the db to be ready
   triggers = {
     file_sha = "${sha1(file("file.sql"))}"
   }
@@ -126,8 +129,8 @@ resource "aws_lambda_function" "bexh_api_proxy_post" {
       ENV_NAME                          = var.env_name
       LOG_LEVEL                         = var.log_level
       TOKEN_TABLE_NAME                  = aws_dynamodb_table.this.name
-      MYSQL_HOST_URL                    = aws_db_instance.this.address
-      MYSQL_DATABASE_NAME               = aws_db_instance.this.name
+      MYSQL_HOST_URL                    = aws_rds_cluster.this.endpoint
+      MYSQL_DATABASE_NAME               = aws_rds_cluster.this.database_name
       BET_STATUS_CHANGE_EMAIL_SNS_TOPIC = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
       VERIFICATION_EMAIL_SNS_TOPIC      = module.bexh_verification_email_sns_lambda.aws_sns_topic.arn
       EXCHANGE_BET_KINESIS_STREAM       = aws_kinesis_stream.this.name
@@ -406,9 +409,9 @@ resource "aws_security_group" "ecs_sg" {
   # TODO: replace this with privatelink https://aws.amazon.com/blogs/compute/setting-up-aws-privatelink-for-amazon-ecs-and-amazon-ecr/
   ingress {
     description = "Http inbound for ecr"
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -467,8 +470,8 @@ resource "aws_cloudwatch_log_group" "ecs_connector" {
 }
 
 resource "aws_ecs_service" "main" {
-  name    = "bexh-ecs-service-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  cluster = aws_ecs_cluster.main.id
+  name            = "bexh-ecs-service-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.app.arn
   # task_definition      = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
   desired_count        = 0

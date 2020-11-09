@@ -9,6 +9,14 @@ terraform {
   }
 }
 
+provider "aws" {
+  region = "us-east-1"
+}
+
+data "aws_region" "current" {}
+
+data "aws_caller_identity" "current" {}
+
 module "bexh_app" {
   source = "./modules/bexh_app"
 
@@ -26,4 +34,16 @@ module "bexh_app" {
   bexh_email = var.bexh_email
   bexh_bet_submit_lambda_s3_version = var.bexh_bet_submit_lambda_s3_version
   connector_image_tag = var.connector_image_tag
+}
+
+module "bexh_exchange" {
+  source = "./modules/bexh_exchange"
+
+  region = data.aws_region.current.name
+  env_name = var.env_name
+  log_level = var.log_level
+  account_id = data.aws_caller_identity.current.account_id
+  vpc = var.vpc
+  es_subnets = var.es_subnets
+  event_connector_image_tag = var.event_connector_image_tag
 }

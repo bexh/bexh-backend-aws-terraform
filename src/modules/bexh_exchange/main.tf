@@ -156,61 +156,61 @@ EOF
 // region: s3 bucket
 
 resource "aws_s3_bucket" "incoming_data" {
-    bucket = "bexh-exchange-incoming-${var.env_name}-${var.account_id}"
+  bucket = "bexh-exchange-incoming-${var.env_name}-${var.account_id}"
 }
 
 resource "aws_s3_bucket" "outgoing_data" {
-    bucket = "bexh-exchange-outgoing-${var.env_name}-${var.account_id}"
+  bucket = "bexh-exchange-outgoing-${var.env_name}-${var.account_id}"
 }
 
 // region: kinesis
 
 resource "aws_kinesis_stream" "incoming" {
-    name = "bexh-exchange-incoming-${var.env_name}-${var.account_id}"
-    shard_count = 1
+  name        = "bexh-exchange-incoming-${var.env_name}-${var.account_id}"
+  shard_count = 1
 }
 
 resource "aws_kinesis_stream" "outgoing" {
-    name = "bexh-exchange-outgoing-${var.env_name}-${var.account_id}"
-    shard_count = 1
+  name        = "bexh-exchange-outgoing-${var.env_name}-${var.account_id}"
+  shard_count = 1
 }
 
 // region: kinesis firehose
 
 resource "aws_kinesis_firehose_delivery_stream" "incoming" {
-    name = "bexh-exchange-incoming-firehose-${var.env_name}-${var.account_id}"
-    destination = "s3"
+  name        = "bexh-exchange-incoming-firehose-${var.env_name}-${var.account_id}"
+  destination = "s3"
 
-    s3_configuration {
-        role_arn = aws_iam_role.firehose_role.arn
-        bucket_arn = aws_s3_bucket.incoming_data.arn
-    }
+  s3_configuration {
+    role_arn   = aws_iam_role.firehose_role.arn
+    bucket_arn = aws_s3_bucket.incoming_data.arn
+  }
 
-    kinesis_source_configuration {
-        kinesis_stream_arn = aws_kinesis_stream.incoming.arn
-        role_arn = aws_iam_role.firehose_role.arn
-    }
+  kinesis_source_configuration {
+    kinesis_stream_arn = aws_kinesis_stream.incoming.arn
+    role_arn           = aws_iam_role.firehose_role.arn
+  }
 }
 
 resource "aws_kinesis_firehose_delivery_stream" "outgoing" {
-    name = "bexh-exchange-outgoing-firehose-${var.env_name}-${var.account_id}"
-    destination = "s3"
+  name        = "bexh-exchange-outgoing-firehose-${var.env_name}-${var.account_id}"
+  destination = "s3"
 
-    s3_configuration {
-        role_arn = aws_iam_role.firehose_role.arn
-        bucket_arn = aws_s3_bucket.outgoing_data.arn
-    }
+  s3_configuration {
+    role_arn   = aws_iam_role.firehose_role.arn
+    bucket_arn = aws_s3_bucket.outgoing_data.arn
+  }
 
-    kinesis_source_configuration {
-        kinesis_stream_arn = aws_kinesis_stream.outgoing.arn
-        role_arn = aws_iam_role.firehose_role.arn
-    }
+  kinesis_source_configuration {
+    kinesis_stream_arn = aws_kinesis_stream.outgoing.arn
+    role_arn           = aws_iam_role.firehose_role.arn
+  }
 }
 
 resource "aws_iam_role" "firehose_role" {
-    name = "bexh-exchange-firehose-role-${var.env_name}-${var.account_id}"
+  name = "bexh-exchange-firehose-role-${var.env_name}-${var.account_id}"
 
-    assume_role_policy = <<EOF
+  assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -228,17 +228,17 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "attach_s3_write" {
-    role = aws_iam_role.firehose_role.name
-    policy_arn = aws_iam_policy.s3_write.arn
+  role       = aws_iam_role.firehose_role.name
+  policy_arn = aws_iam_policy.s3_write.arn
 }
 
 resource "aws_iam_policy" "s3_write" {
-    name = "bexh-exchange-firehose-${var.env_name}-${var.account_id}"
-    description = "Allows firehose to write to s3"
+  name        = "bexh-exchange-firehose-${var.env_name}-${var.account_id}"
+  description = "Allows firehose to write to s3"
 
-    policy = <<EOF
-    {
-        "Version": "2012-10-17",  
+  policy = <<EOF
+{
+    "Version": "2012-10-17",  
     "Statement":
     [    
         {      
@@ -252,8 +252,8 @@ resource "aws_iam_policy" "s3_write" {
                 "s3:PutObject"
             ],      
             "Resource": [        
-                ${aws_s3_bucket.incoming_data.arn},
-                ${aws_s3_bucket.outgoing_data.arn}		    
+                "${aws_s3_bucket.incoming_data.arn}",
+                "${aws_s3_bucket.outgoing_data.arn}"		    
             ]    
         },        
         {
@@ -265,8 +265,8 @@ resource "aws_iam_policy" "s3_write" {
                 "kinesis:ListShards"
             ],
             "Resource": [
-                ${aws_kinesis_stream.incoming.arn},
-                ${aws_kinesis_stream.outgoing.arn}
+                "${aws_kinesis_stream.incoming.arn}",
+                "${aws_kinesis_stream.outgoing.arn}"
             ]
         }
     ]
@@ -277,10 +277,10 @@ resource "aws_iam_policy" "s3_write" {
 // region: elasticache redis
 
 resource "aws_elasticache_cluster" "this" {
-    cluster_id = "bexh-exchange-marketbook-${var.env_name}-${var.account_id}"
-    engine = "redis"
-    node_type = "cache.t2.micro"
-    num_cache_nodes = 1
-    parameter_group_name = "default.redis6.x.cluster.on"
-    port = 6379
+  cluster_id           = "bexh-exchange-marketbook-${var.env_name}-${var.account_id}"
+  engine               = "redis"
+  node_type            = "cache.t2.micro"
+  num_cache_nodes      = 1
+  parameter_group_name = "default.redis6.x.cluster.on"
+  port                 = 6379
 }

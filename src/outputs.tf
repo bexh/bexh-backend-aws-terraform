@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 # output "API_Gateway_base_url" {
 #   value = aws_api_gateway_deployment.this.invoke_url
 # }
+=======
+output "API_Gateway_base_url" {
+  value = aws_api_gateway_deployment.this.invoke_url
+}
+>>>>>>> master
 
 # output "ElasticSearch_Endpoint" {
 #   value = aws_elasticsearch_domain.es.endpoint

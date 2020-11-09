@@ -58,6 +58,7 @@ resource "aws_rds_cluster" "this" {
   db_cluster_parameter_group_name = "default.aurora-mysql5.7"
   vpc_security_group_ids          = ["${aws_security_group.rds_sg.id}"]
   enable_http_endpoint            = true
+  final_snapshot_identifier       = "bexh-ods-cluster-snapshot-${var.env_name}-${data.aws_caller_identity.current.account_id}"
 
   scaling_configuration {
     auto_pause               = true
@@ -66,15 +67,15 @@ resource "aws_rds_cluster" "this" {
   }
 }
 
-resource "null_resource" "setup_db" {
-  depends_on = [aws_rds_cluster.this] #wait for the db to be ready
-  triggers = {
-    file_sha = "${sha1(file("file.sql"))}"
-  }
-  provisioner "local-exec" {
-    command = "echo test"
-  }
-}
+# resource "null_resource" "setup_db" {
+#   depends_on = [aws_rds_cluster.this] #wait for the db to be ready
+#   triggers = {
+#     file_sha = "${sha1(file("file.sql"))}"
+#   }
+#   provisioner "local-exec" {
+#     command = "echo test"
+#   }
+# }
 
 // region: api gateway + lambda
 

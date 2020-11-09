@@ -69,6 +69,7 @@ resource "aws_rds_cluster" "this" {
   db_cluster_parameter_group_name = "default.aurora-mysql5.7"
   vpc_security_group_ids          = ["${aws_security_group.rds_sg.id}"]
   enable_http_endpoint            = true
+  final_snapshot_identifier = "bexh-ods-cluster-snapshot-${var.env_name}-${data.aws_caller_identity.current.account_id}"
 
   scaling_configuration {
     auto_pause               = true

@@ -319,6 +319,6 @@ resource "aws_elasticache_replication_group" "this" {
 
   cluster_mode {
       replicas_per_node_group = 0
-      num_node_groups = 2
+      num_node_groups = 1
   }
 }

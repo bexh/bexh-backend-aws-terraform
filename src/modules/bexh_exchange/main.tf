@@ -302,10 +302,23 @@ resource "aws_iam_policy" "s3_write" {
 // region: elasticache redis
 
 resource "aws_elasticache_cluster" "this" {
-  cluster_id           = "bexh-exchange-marketbook-${var.env_name}-${var.account_id}"
+  cluster_id           = "bexh-exchange-mktbk-${var.env_name}-${var.account_id}"
   engine               = "redis"
   node_type            = "cache.t2.micro"
   num_cache_nodes      = 1
-  parameter_group_name = "default.redis6.0"
+  parameter_group_name = "default.redis6.x.cluster.on"
+  engine_version = "6.x"
   port                 = 6379
+  replication_group_id = aws_elasticache_replication_group.this.id
+}
+
+resource "aws_elasticache_replication_group" "this" {
+  automatic_failover_enabled    = true
+  availability_zones            = ["us-east-1"]
+  replication_group_id          = "bexh-exchange-mktbk-rep-${var.env_name}-${var.account_id}"
+  replication_group_description = "bexh marketbook redis cluster"
+  node_type                     = "cache.t2.micro"
+  number_cache_clusters         = 1
+  parameter_group_name          = "default.redis6.x.cluster.on"
+  port                          = 6379
 }

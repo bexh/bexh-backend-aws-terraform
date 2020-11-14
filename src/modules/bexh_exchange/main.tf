@@ -306,6 +306,6 @@ resource "aws_elasticache_cluster" "this" {
   engine               = "redis"
   node_type            = "cache.t2.micro"
   num_cache_nodes      = 1
-  parameter_group_name = "default.redis5.0"
+  parameter_group_name = "default.redis6.0"
   port                 = 6379
 }

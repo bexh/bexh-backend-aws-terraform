@@ -314,7 +314,7 @@ resource "aws_elasticache_cluster" "this" {
 
 resource "aws_elasticache_replication_group" "this" {
   automatic_failover_enabled    = true
-  availability_zones            = ["us-east-1"]
+  availability_zones            = ["us-east-1b", "us-east-1d"]
   replication_group_id          = "bexh-exchange-mktbk-rep-${var.env_name}-${var.account_id}"
   replication_group_description = "bexh marketbook redis cluster"
   node_type                     = "cache.t2.micro"

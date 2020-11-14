@@ -1,5 +1,5 @@
 resource "aws_ecs_task_definition" "this" {
-  family                   = "bexh-exchange-event-connector-${var.env_name}-${var.account_id}"
+  family                   = "bexh-${var.name}-${var.env_name}-${var.account_id}"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
@@ -11,8 +11,8 @@ resource "aws_ecs_task_definition" "this" {
 [
   {
     "cpu": 128,
-    "environment": [${var.env_vars}],
-    "image": "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_repository}:${var.event_connector_image_tag}",
+    "environment": ${var.env_vars},
+    "image": "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_repository}:${var.image_tag}",
     "memory": 128,
     "name": "app",
     "networkMode": "awsvpc",
@@ -38,7 +38,7 @@ resource "aws_cloudwatch_log_group" "this" {
 
 resource "aws_ecs_service" "main" {
   name            = "bexh-${var.name}-${var.env_name}-${var.account_id}"
-  cluster         = env.cluster_id
+  cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.this.arn
   # task_definition      = "${aws_ecs_task_definition.this.family}:${aws_ecs_task_definition.this.revision}"
   desired_count        = 0
@@ -56,7 +56,7 @@ resource "aws_ecs_service" "main" {
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name               = "ecs-${var.name}-task-execution-role-${var.env_name}-${var.account_id}"
+  name               = "ecs-${var.name}-task-exec-role-${var.env_name}-${var.account_id}"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy_doc.json
 }
 
@@ -77,7 +77,7 @@ data "aws_iam_policy_document" "ecs_assume_role_policy_doc" {
 }
 
 resource "aws_iam_role" "ecs_task_definition_role" {
-  name               = "ecs-${var.name}-task-definition-role-${var.env_name}-${var.account_id}"
+  name               = "ecs-${var.name}-task-def-role-${var.env_name}-${var.account_id}"
   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy_doc.json
 }
 

@@ -34,32 +34,35 @@ resource "aws_security_group" "ecs_sg" {
   }
 }
 
-resource "aws_ecs_cluster" "main" {
-  name = "bexh-exchange-cluster-${var.env_name}-${var.account_id}"
+resource "aws_ecs_cluster" "this" {
+  name = "bexh-exch-cluster-${var.env_name}-${var.account_id}"
 }
 
-# module "bexh_event_connector_service" {
-#     source "../bexh_ecs_service"
+module "bexh_event_connector_service" {
+  source = "../bexh_ecs_service"
 
-#     name = "exchange-event-connector"
-#     cluster_id = aws_ecs_cluster.main.id
-#     env_name = var.env_name
-#     account_id = var.account_id
-#     ecr_repository = "bexh-event-connector-aws-ecs"
-#     image_tag = var.event_connector_image_tag
-#     security_groups = ["${aws_security_group.ecs_sg.id}"]
-#     log_level = var.log_level
-#     subnets = var.es_subnets
-#     env_vars = {
-#         "LOG_LEVEL": "${var.log_level}",
-#         "ENV_NAME": "${var.env_name}",
-#         "REDIS_HOST": "${aws_elasticache_cluster.this.configuration_endpoint}",
-#         "REDIS_PORT": "${aws_elasticache_cluster.this.port}",
-#         "INCOMING_KINESIS_STREAM_NAME": "${aws_kinesis_stream.incoming.name}",
-#         "OUTGOING_KINESIS_STREAM_NAME": "${aws_kinesis_stream.outgoing.name}",
-#         "TEST": "${aws_elasticache_cluster.this.cache_nodes.0.address}"
-#       }
-# }
+  name            = "exch-event-connector"
+  cluster_id      = aws_ecs_cluster.this.id
+  env_name        = var.env_name
+  account_id      = var.account_id
+  ecr_repository  = "bexh-event-connector-aws-ecs"
+  image_tag       = var.event_connector_image_tag
+  security_groups = ["${aws_security_group.ecs_sg.id}"]
+  log_level       = var.log_level
+  subnets         = var.es_subnets
+  env_vars = <<EOF
+[
+    {
+        "LOG_LEVEL" : "${var.log_level}",
+        "ENV_NAME" : "${var.env_name}",
+        "REDIS_HOST" : "${aws_elasticache_replication_group.this.configuration_endpoint_address}",
+        "REDIS_PORT" : "${aws_elasticache_cluster.this.port}",
+        "INCOMING_KINESIS_STREAM_NAME" : "${aws_kinesis_stream.incoming.name}",
+        "OUTGOING_KINESIS_STREAM_NAME" : "${aws_kinesis_stream.outgoing.name}"
+    }
+]
+EOF
+}
 
 # resource "aws_ecs_task_definition" "event_connector" {
 #   family                   = "bexh-exchange-event-connector-${var.env_name}-${var.account_id}"
@@ -111,7 +114,7 @@ resource "aws_ecs_cluster" "main" {
 #   name            = "exchange-event-connector"
 #   env_name = var.env_name
 #   account_id = var.account_id
-#   cluster         = aws_ecs_cluster.main.id
+#   cluster         = aws_ecs_cluster.this.id
 #   task_definition = aws_ecs_task_definition.event_connector.arn
 #   # task_definition      = "${aws_ecs_task_definition.event_connector.family}:${aws_ecs_task_definition.event_connector.revision}"
 #   desired_count        = 0
@@ -181,29 +184,29 @@ resource "aws_ecs_cluster" "main" {
 // region: s3 bucket
 
 resource "aws_s3_bucket" "incoming_data" {
-  bucket = "bexh-exchange-incoming-${var.env_name}-${var.account_id}"
+  bucket = "bexh-exch-in-${var.env_name}-${var.account_id}"
 }
 
 resource "aws_s3_bucket" "outgoing_data" {
-  bucket = "bexh-exchange-outgoing-${var.env_name}-${var.account_id}"
+  bucket = "bexh-exch-out-${var.env_name}-${var.account_id}"
 }
 
 // region: kinesis
 
 resource "aws_kinesis_stream" "incoming" {
-  name        = "bexh-exchange-incoming-${var.env_name}-${var.account_id}"
+  name        = "bexh-exch-in-${var.env_name}-${var.account_id}"
   shard_count = 1
 }
 
 resource "aws_kinesis_stream" "outgoing" {
-  name        = "bexh-exchange-outgoing-${var.env_name}-${var.account_id}"
+  name        = "bexh-exch-out-${var.env_name}-${var.account_id}"
   shard_count = 1
 }
 
 // region: kinesis firehose
 
 resource "aws_kinesis_firehose_delivery_stream" "incoming" {
-  name        = "bexh-exchange-incoming-firehose-${var.env_name}-${var.account_id}"
+  name        = "bexh-exch-in-firehose-${var.env_name}-${var.account_id}"
   destination = "s3"
 
   s3_configuration {
@@ -218,7 +221,7 @@ resource "aws_kinesis_firehose_delivery_stream" "incoming" {
 }
 
 resource "aws_kinesis_firehose_delivery_stream" "outgoing" {
-  name        = "bexh-exchange-outgoing-firehose-${var.env_name}-${var.account_id}"
+  name        = "bexh-exch-out-firehose-${var.env_name}-${var.account_id}"
   destination = "s3"
 
   s3_configuration {
@@ -233,7 +236,7 @@ resource "aws_kinesis_firehose_delivery_stream" "outgoing" {
 }
 
 resource "aws_iam_role" "firehose_role" {
-  name = "bexh-exchange-firehose-role-${var.env_name}-${var.account_id}"
+  name = "bexh-exch-firehose-role-${var.env_name}-${var.account_id}"
 
   assume_role_policy = <<EOF
 {
@@ -258,7 +261,7 @@ resource "aws_iam_role_policy_attachment" "attach_s3_write" {
 }
 
 resource "aws_iam_policy" "s3_write" {
-  name        = "bexh-exchange-firehose-${var.env_name}-${var.account_id}"
+  name        = "bexh-exch-firehose-${var.env_name}-${var.account_id}"
   description = "Allows firehose to write to s3"
 
   policy = <<EOF
@@ -302,22 +305,20 @@ resource "aws_iam_policy" "s3_write" {
 // region: elasticache redis
 
 resource "aws_elasticache_cluster" "this" {
-  cluster_id           = "bexh-exchange-mktbk-${var.env_name}-${var.account_id}"
-  engine               = "redis"
-  node_type            = "cache.t2.micro"
-  num_cache_nodes      = 1
-  parameter_group_name = "default.redis6.x.cluster.on"
-  engine_version = "6.x"
-  port                 = 6379
+  cluster_id           = "bexh-exch-mktbk-${var.env_name}-${var.account_id}"
   replication_group_id = aws_elasticache_replication_group.this.id
 }
 
 resource "aws_elasticache_replication_group" "this" {
   automatic_failover_enabled    = true
-  replication_group_id          = "bexh-exchange-mktbk-rep-${var.env_name}-${var.account_id}"
+  replication_group_id          = "bexh-exch-mktbk-rep-${var.env_name}-${var.account_id}"
   replication_group_description = "bexh marketbook redis cluster"
+  engine = "redis"
   node_type                     = "cache.t2.micro"
-  number_cache_clusters         = 1
-  parameter_group_name          = "default.redis6.x.cluster.on"
   port                          = 6379
+
+  cluster_mode {
+      replicas_per_node_group = 0
+      num_node_groups = 2
+  }
 }

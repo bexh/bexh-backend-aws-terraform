@@ -46,7 +46,7 @@ variable "subnets" {
 }
 
 variable "env_vars" {
-    type = dict
+    type = string
 }
 
 variable "cluster_id" {

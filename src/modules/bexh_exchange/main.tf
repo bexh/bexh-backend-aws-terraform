@@ -92,7 +92,6 @@ module "bexh_trade_executor_service" {
 EOF
 }
 
-// TODO: add back env vars
 
 // region: kcl state manager
 
@@ -127,30 +126,30 @@ resource "aws_kinesis_stream" "outgoing_bets" {
 // region: kinesis firehose & s3
 
 module "incoming_bets_kinesis_firehose_s3" {
-    source = "../bexh_firehose_s3"
+  source = "../bexh_firehose_s3"
 
-    name = "bets-in"
-    env_name = var.env_name
-    account_id = var.account_id
-    kinesis_stream_arn = aws_kinesis_stream.incoming_bets.arn
+  name               = "bets-in"
+  env_name           = var.env_name
+  account_id         = var.account_id
+  kinesis_stream_arn = aws_kinesis_stream.incoming_bets.arn
 }
 
 module "outgoing_bets_kinesis_firehose_s3" {
-    source = "../bexh_firehose_s3"
+  source = "../bexh_firehose_s3"
 
-    name = "bets-out"
-    env_name = var.env_name
-    account_id = var.account_id
-    kinesis_stream_arn = aws_kinesis_stream.outgoing_bets.arn
+  name               = "bets-out"
+  env_name           = var.env_name
+  account_id         = var.account_id
+  kinesis_stream_arn = aws_kinesis_stream.outgoing_bets.arn
 }
 
 module "outgoing_events_kinesis_firehose_s3" {
-    source = "../bexh_firehose_s3"
+  source = "../bexh_firehose_s3"
 
-    name = "events-out"
-    env_name = var.env_name
-    account_id = var.account_id
-    kinesis_stream_arn = aws_kinesis_stream.outgoing_events.arn
+  name               = "events-out"
+  env_name           = var.env_name
+  account_id         = var.account_id
+  kinesis_stream_arn = aws_kinesis_stream.outgoing_events.arn
 }
 
 // region: elasticache redis
@@ -164,13 +163,24 @@ resource "aws_elasticache_replication_group" "this" {
   automatic_failover_enabled    = true
   replication_group_id          = "bexh-exch-mktbk-rep-${var.env_name}-${var.account_id}"
   replication_group_description = "bexh marketbook redis cluster"
+  parameter_group_name          = aws_elasticache_parameter_group.this.name
   engine                        = "redis"
   node_type                     = "cache.t2.micro"
   port                          = 6379
-  engine_version                = "6.0.5"
+  engine_version                = "6.x"
 
   cluster_mode {
     replicas_per_node_group = 1
     num_node_groups         = 2
   }
 }
+
+resource "aws_elasticache_parameter_group" "this" {
+  name   = "bexh-exch-mktbk-params-${var.env_name}-${var.account_id}"
+  family = "default.redis6.x.cluster.on"
+  parameter {
+    name  = "cluster-enabled"
+    value = "yes"
+  }
+}
+

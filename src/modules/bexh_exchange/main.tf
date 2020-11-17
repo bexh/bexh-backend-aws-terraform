@@ -56,9 +56,9 @@ module "bexh_event_connector_service" {
         "LOG_LEVEL" : "${var.log_level}",
         "ENV_NAME" : "${var.env_name}",
         "REDIS_HOST" : "${aws_elasticache_replication_group.this.configuration_endpoint_address}",
-        "REDIS_PORT" : "${aws_elasticache_cluster.this.port}",
+        "REDIS_PORT" : "${aws_elasticache_replication_group.this.port}",
         "INCOMING_BETS_KINESIS_STREAM_NAME" : "${aws_kinesis_stream.incoming_bets.name}",
-        "OUTGOING_EVENTS_KINESIS_STREAM_NAME" : "${aws_kinesis_stream.outgoing_events.name}"
+        "OUTGOING_EVENTS_KINESIS_STREAM_NAME" : "${aws_kinesis_stream.outgoing_events.name}",
         "OUTGOING_BETS_KINESIS_STREAM_NAME": "${aws_kinesis_stream.outgoing_bets.name}"
     }
 ]
@@ -83,7 +83,7 @@ module "bexh_trade_executor_service" {
         "LOG_LEVEL" : "${var.log_level}",
         "ENV_NAME" : "${var.env_name}",
         "REDIS_HOST" : "${aws_elasticache_replication_group.this.configuration_endpoint_address}",
-        "REDIS_PORT" : "${aws_elasticache_cluster.this.port}",
+        "REDIS_PORT" : "${aws_elasticache_replication_group.this.port}",
         "INCOMING_KINESIS_STREAM_NAME" : "${aws_kinesis_stream.incoming_bets.name}",
         "OUTGOING_KINESIS_STREAM_NAME" : "${aws_kinesis_stream.outgoing_bets.name}",
         "KCL_STATE_MANAGER_TABLE_NAME": "${aws_dynamodb_table.trade_executor_kcl_state_manager.name}"
@@ -91,6 +91,8 @@ module "bexh_trade_executor_service" {
 ]
 EOF
 }
+
+// TODO: add back env vars
 
 // region: kcl state manager
 
@@ -153,10 +155,10 @@ module "outgoing_events_kinesis_firehose_s3" {
 
 // region: elasticache redis
 
-resource "aws_elasticache_cluster" "this" {
-  cluster_id           = "bexh-exch-mktbk-${var.env_name}-${var.account_id}"
-  replication_group_id = aws_elasticache_replication_group.this.id
-}
+# resource "aws_elasticache_cluster" "this" {
+#   cluster_id           = "bexh-exch-mktbk-${var.env_name}-${var.account_id}"
+#   replication_group_id = aws_elasticache_replication_group.this.id
+# }
 
 resource "aws_elasticache_replication_group" "this" {
   automatic_failover_enabled    = true
@@ -168,7 +170,7 @@ resource "aws_elasticache_replication_group" "this" {
   engine_version                = "6.0.5"
 
   cluster_mode {
-    replicas_per_node_group = 0
-    num_node_groups         = 1
+    replicas_per_node_group = 1
+    num_node_groups         = 2
   }
 }

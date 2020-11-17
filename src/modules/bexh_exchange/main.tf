@@ -170,8 +170,8 @@ resource "aws_elasticache_replication_group" "this" {
   engine_version                = "6.x"
 
   cluster_mode {
-    replicas_per_node_group = 1
-    num_node_groups         = 2
+    replicas_per_node_group = 0
+    num_node_groups         = 1
   }
 }
 

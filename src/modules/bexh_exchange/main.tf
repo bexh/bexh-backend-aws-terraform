@@ -177,7 +177,7 @@ resource "aws_elasticache_replication_group" "this" {
 
 resource "aws_elasticache_parameter_group" "this" {
   name   = "bexh-exch-mktbk-params-${var.env_name}-${var.account_id}"
-  family = "default.redis6.x.cluster.on"
+  family = "redis6.x"
   parameter {
     name  = "cluster-enabled"
     value = "yes"

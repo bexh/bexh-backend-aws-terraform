@@ -49,8 +49,7 @@ resource "aws_iam_policy" "s3_write" {
   policy = <<EOF
 {
     "Version": "2012-10-17",  
-    "Statement":
-    [    
+    "Statement": [    
         {      
             "Effect": "Allow",      
             "Action": [
@@ -62,7 +61,7 @@ resource "aws_iam_policy" "s3_write" {
                 "s3:PutObject"
             ],      
             "Resource": [        
-                "${aws_s3_bucket.this.arn}",	    
+                "${aws_s3_bucket.this.arn}"	    
             ]    
         },        
         {
@@ -78,6 +77,6 @@ resource "aws_iam_policy" "s3_write" {
             ]
         }
     ]
-    }
-    EOF
+}
+EOF
 }

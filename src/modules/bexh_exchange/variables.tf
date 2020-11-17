@@ -28,3 +28,8 @@ variable "event_connector_image_tag" {
   type = string
   description = "tag of bexh event connector from ecr image"
 }
+
+variable "trade_executor_image_tag" {
+  type = string
+  description = "tag of bexh trade executor from ecr image"
+}

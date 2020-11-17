@@ -46,4 +46,5 @@ module "bexh_exchange" {
   vpc = var.vpc
   es_subnets = var.es_subnets
   event_connector_image_tag = var.event_connector_image_tag
+  trade_executor_image_tag = var.trade_executor_image_tag
 }

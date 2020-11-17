@@ -79,11 +79,14 @@ variable "bexh_email" {
 variable "connector_image_tag" {
   type = string
   description = "tag of bexh connector from ecr image"
-  default = "4a6687de046e3efe2bdb528e0074fc8687841130"
 }
 
 variable "event_connector_image_tag" {
   type = string
   description = "tag of bexh event connector from ecr image"
-  default = "5ece0d6d9d37a90e73eb0e6283b6ffe6e36c0f18"
+}
+
+variable "trade_executor_image_tag" {
+  type = string
+  description = "tag of bexh trade executor from ecr image"
 }

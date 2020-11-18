@@ -8,29 +8,6 @@ resource "aws_ecs_task_definition" "this" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = module.container_definition.container_definitions
-#   <<DEFINITION
-# [
-#   {
-#     "cpu": 128,
-#     "environment": [
-#         {"FOO": "BAR"}
-#     ],
-#     "image": "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_repository}:${var.image_tag}",
-#     "memory": 128,
-#     "name": "app",
-#     "networkMode": "awsvpc",
-#     "portMappings": [],
-#     "logConfiguration": {
-#       "logDriver": "awslogs",
-#       "options": {
-#         "awslogs-group": "${aws_cloudwatch_log_group.this.name}",
-#         "awslogs-region": "${var.region}",
-#         "awslogs-stream-prefix": "ecs" 
-#       }
-#     }
-#   }
-# ]
-# DEFINITION
 
   depends_on = [aws_cloudwatch_log_group.this]
 }

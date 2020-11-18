@@ -2,22 +2,16 @@ variable "name" {
     type = string
 }
 
+variable "cluster_id" {
+    type = string
+}
+
 variable "env_name" {
     type = string
 }
 
 variable "account_id" {
     type = string
-}
-
-variable "cpu" {
-    type = string
-    default = "512"
-}
-
-variable "memory" {
-    type = string
-    default = "1024"
 }
 
 variable "ecr_repository" {
@@ -30,6 +24,16 @@ variable "image_tag" {
 
 variable "security_groups" {
     type = list(string)
+}
+
+variable "cpu" {
+    type = string
+    default = "512"
+}
+
+variable "memory" {
+    type = string
+    default = "1024"
 }
 
 variable "region" {
@@ -47,8 +51,4 @@ variable "subnets" {
 
 variable "env_vars" {
     type = list(map(string))
-}
-
-variable "cluster_id" {
-    type = string
 }

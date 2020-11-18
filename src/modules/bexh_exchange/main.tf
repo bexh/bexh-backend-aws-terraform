@@ -50,15 +50,20 @@ module "bexh_event_connector_service" {
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
-  env_vars        = [{
-    LOG_LEVEL = var.log_level
-    ENV_NAME = var.env_name
-    REDIS_PORT = aws_elasticache_replication_group.this.port
-    REDIS_HOST = aws_elasticache_replication_group.this.configuration_endpoint_address
-    INCOMING_BETS_KINESIS_STREAM_NAME = aws_kinesis_stream.incoming_bets.name
-    OUTGOING_EVENTS_KINESIS_STREAM_NAME = aws_kinesis_stream.outgoing_events.name
-    OUTGOING_BETS_KINESIS_STREAM_NAME = aws_kinesis_stream.outgoing_bets.name
-  }]
+  env_vars        = [
+    {
+        name = "LOG_LEVEL"
+        value = var.log_level
+    }
+
+    # LOG_LEVEL = var.log_level
+    # ENV_NAME = var.env_name
+    # REDIS_PORT = aws_elasticache_replication_group.this.port
+    # REDIS_HOST = aws_elasticache_replication_group.this.configuration_endpoint_address
+    # INCOMING_BETS_KINESIS_STREAM_NAME = aws_kinesis_stream.incoming_bets.name
+    # OUTGOING_EVENTS_KINESIS_STREAM_NAME = aws_kinesis_stream.outgoing_events.name
+    # OUTGOING_BETS_KINESIS_STREAM_NAME = aws_kinesis_stream.outgoing_bets.name
+  ]
 }
        
 
@@ -74,15 +79,17 @@ module "bexh_trade_executor_service" {
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
-  env_vars        = [{
-    LOG_LEVEL = var.log_level
-    ENV_NAME = var.env_name
-    REDIS_PORT = aws_elasticache_replication_group.this.port
-    REDIS_HOST = aws_elasticache_replication_group.this.configuration_endpoint_address
-    INCOMING_KINESIS_STREAM_NAME = aws_kinesis_stream.incoming_bets.name
-    OUTGOING_KINESIS_STREAM_NAME = aws_kinesis_stream.outgoing_bets.name
-    KCL_STATE_MANAGER_TABLE_NAME = aws_dynamodb_table.trade_executor_kcl_state_manager.name
-  }]
+  env_vars        = [
+#       {
+#     LOG_LEVEL = var.log_level
+#     ENV_NAME = var.env_name
+#     REDIS_PORT = aws_elasticache_replication_group.this.port
+#     REDIS_HOST = aws_elasticache_replication_group.this.configuration_endpoint_address
+#     INCOMING_KINESIS_STREAM_NAME = aws_kinesis_stream.incoming_bets.name
+#     OUTGOING_KINESIS_STREAM_NAME = aws_kinesis_stream.outgoing_bets.name
+#     KCL_STATE_MANAGER_TABLE_NAME = aws_dynamodb_table.trade_executor_kcl_state_manager.name
+#   }
+  ]
 }
 
 // TODO: add back env var 

@@ -201,7 +201,7 @@ resource "aws_elasticache_replication_group" "this" {
   engine                        = "redis"
   node_type                     = "cache.t2.micro"
   port                          = 6379
-  engine_version                = "6.x"
+  engine_version                = "6.0.5"
 
   cluster_mode {
     replicas_per_node_group = 0

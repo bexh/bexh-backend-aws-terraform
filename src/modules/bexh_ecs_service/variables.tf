@@ -46,7 +46,7 @@ variable "subnets" {
 }
 
 variable "env_vars" {
-    type = string
+    type = list(map(string))
 }
 
 variable "cluster_id" {

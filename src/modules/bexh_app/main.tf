@@ -416,7 +416,7 @@ resource "aws_security_group" "ecs_sg" {
 }
 
 resource "aws_ecs_cluster" "this" {
-  name = "bexh-connector-cluster-${var.env_name}-${var.account_id}"
+  name = "bexh-cluster-${var.env_name}-${var.account_id}"
 }
 
 module "bexh_connector_service" {

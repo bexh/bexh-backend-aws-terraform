@@ -23,6 +23,7 @@ module "bexh_app" {
   whitelisted_ips = var.whitelisted_ips
   env_name = var.env_name
   log_level = var.log_level
+  account_id = data.aws_caller_identity.current.account_id
   bexh_api_lambda_s3_version = var.bexh_api_lambda_s3_version
   es_domain = var.es_domain
   es_subnets = var.es_subnets
@@ -34,6 +35,7 @@ module "bexh_app" {
   bexh_email = var.bexh_email
   bexh_bet_submit_lambda_s3_version = var.bexh_bet_submit_lambda_s3_version
   connector_image_tag = var.connector_image_tag
+  connector_instance_count = var.connector_instance_count
 }
 
 module "bexh_exchange" {
@@ -47,4 +49,9 @@ module "bexh_exchange" {
   es_subnets = var.es_subnets
   event_connector_image_tag = var.event_connector_image_tag
   trade_executor_image_tag = var.trade_executor_image_tag
+  event_connector_instance_count = var.event_connector_instance_count
+  trade_executor_instance_count = var.trade_executor_instance_count
+  incoming_bets_shard_count = var.incoming_bets_shard_count
+  outgoing_events_shard_count = var.outgoing_events_shard_count
+  outgoing_bets_shard_count = var.outgoing_bets_shard_count
 }

@@ -52,3 +52,9 @@ variable "subnets" {
 variable "env_vars" {
     type = list(map(string))
 }
+
+variable "instance_count" {
+    type = number
+    description = "number of ecs task instances"
+    default = 0
+}

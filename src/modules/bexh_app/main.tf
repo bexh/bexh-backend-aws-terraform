@@ -51,14 +51,14 @@ resource "aws_rds_cluster" "this" {
   engine_mode                     = "serverless"
   engine                          = "aurora-mysql"
   engine_version                  = "5.7.mysql_aurora.2.07.1"
-  cluster_identifier              = "bexh-ods-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  cluster_identifier              = "bexh-ods-cluster-${var.env_name}-${var.account_id}"
   database_name                   = "BexhOdsDb"
   master_username                 = local.db_creds.username
   master_password                 = local.db_creds.password
   db_cluster_parameter_group_name = "default.aurora-mysql5.7"
   vpc_security_group_ids          = ["${aws_security_group.rds_sg.id}"]
   enable_http_endpoint            = true
-  final_snapshot_identifier       = "bexh-ods-cluster-snapshot-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  final_snapshot_identifier       = "bexh-ods-cluster-snapshot-${var.env_name}-${var.account_id}"
 
   scaling_configuration {
     auto_pause               = true
@@ -285,7 +285,7 @@ resource "aws_dynamodb_table" "this" {
 #       type        = "AWS"
 #       identifiers = ["*"]
 #     }
-#     resources = ["arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"]
+#     resources = ["arn:aws:es:${data.aws_region.current.name}:${var.account_id}:domain/${var.es_domain}/*"]
 #   }
 # }
 
@@ -296,7 +296,7 @@ module "bexh_verification_email_sns_lambda" {
   s3_key            = "bexh-email-aws-lambda.zip"
   s3_object_version = var.bexh_email_lambda_s3_version
   env_name          = var.env_name
-  account_id        = data.aws_caller_identity.current.account_id
+  account_id        = var.account_id
   handler           = "main.src.app.verification_email.service.handler"
   timeout           = 900
   env_vars = {
@@ -333,7 +333,7 @@ module "bexh_bet_status_change_sns_lambda" {
 
 // region: Kinesis Lambda Integration
 resource "aws_kinesis_stream" "this" {
-  name        = "bexh-exchange-bet-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  name        = "bexh-exchange-bet-${var.env_name}-${var.account_id}"
   shard_count = 1
 }
 
@@ -344,7 +344,7 @@ module "bexh_bet_submit_lambda" {
   s3_key            = "bexh-bet-submit-aws-lambda.zip"
   s3_object_version = var.bexh_bet_submit_lambda_s3_version
   env_name          = var.env_name
-  account_id        = data.aws_caller_identity.current.account_id
+  account_id        = var.account_id
   handler           = "main.src.service.handler"
   env_vars = {
     ENV_NAME  = var.env_name
@@ -353,7 +353,7 @@ module "bexh_bet_submit_lambda" {
 }
 
 resource "aws_iam_policy" "bet_submit_kinesis_policy" {
-  name        = "bexh-bet-submit-kinesis-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  name        = "bexh-bet-submit-kinesis-${var.env_name}-${var.account_id}"
   description = "Allows kinesis to invoke lambda"
 
   policy = <<EOF
@@ -386,7 +386,7 @@ resource "aws_lambda_event_source_mapping" "this" {
 // section: ECS Fargate Configuration
 
 resource "aws_security_group" "ecs_sg" {
-  name        = "bexh-connector-sg-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+  name        = "bexh-connector-sg-${var.env_name}-${var.account_id}"
   description = "Connector ecs sg"
 
   ingress {
@@ -415,116 +415,132 @@ resource "aws_security_group" "ecs_sg" {
   }
 }
 
-resource "aws_ecs_cluster" "main" {
-  name = "bexh-connector-cluster-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+resource "aws_ecs_cluster" "this" {
+  name = "bexh-connector-cluster-${var.env_name}-${var.account_id}"
 }
 
-resource "aws_ecs_task_definition" "app" {
-  family                   = "app"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "512"
-  memory                   = "1024"
-  task_role_arn            = aws_iam_role.ecs_task_definition_role.arn
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+module "bexh_connector_service" {
+  source = "../bexh_ecs_service"
 
-  container_definitions = <<DEFINITION
-[
-  {
-    "cpu": 128,
-    "environment": [{
-        "name": "FOO",
-        "value": "bar"
-      }],
-    "image": "${data.aws_caller_identity.current.account_id}.dkr.ecr.us-east-1.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}",
-    "memory": 128,
-    "name": "app",
-    "networkMode": "awsvpc",
-    "portMappings": [],
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": "/ecs/bexh-connector-${var.env_name}-${data.aws_caller_identity.current.account_id}",
-        "awslogs-region": "us-east-1",
-        "awslogs-stream-prefix": "ecs" 
-      }
-    }
-  }
-]
-DEFINITION
-
-  depends_on = [aws_cloudwatch_log_group.ecs_connector]
+  name = "connector"
+  cluster_id = aws_ecs_cluster.this.id
+  env_name = var.env_name
+  account_id = var.account_id
+  ecr_repository = "bexh-connector-aws-ecs"
+  image_tag = var.connector_image_tag
+  security_groups = ["${aws_security_group.ecs_sg.id}"]
+  log_level = var.log_level
+  subnets = var.es_subnets
+  env_vars = []
+  instance_count = var.connector_instance_count
 }
 
-resource "aws_cloudwatch_log_group" "ecs_connector" {
-  name = "/ecs/bexh-connector-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-}
+# resource "aws_ecs_task_definition" "app" {
+#   family                   = "app"
+#   network_mode             = "awsvpc"
+#   requires_compatibilities = ["FARGATE"]
+#   cpu                      = "512"
+#   memory                   = "1024"
+#   task_role_arn            = aws_iam_role.ecs_task_definition_role.arn
+#   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
-resource "aws_ecs_service" "main" {
-  name            = "bexh-ecs-service-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.app.arn
-  # task_definition      = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
-  desired_count        = 0
-  launch_type          = "FARGATE"
-  force_new_deployment = true
+#   container_definitions = <<DEFINITION
+# [
+#   {
+#     "cpu": 128,
+#     "environment": [{
+#         "name": "FOO",
+#         "value": "bar"
+#       }],
+#     "image": "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}",
+#     "memory": 128,
+#     "name": "app",
+#     "networkMode": "awsvpc",
+#     "portMappings": [],
+#     "logConfiguration": {
+#       "logDriver": "awslogs",
+#       "options": {
+#         "awslogs-group": "/ecs/bexh-connector-${var.env_name}-${var.account_id}",
+#         "awslogs-region": "us-east-1",
+#         "awslogs-stream-prefix": "ecs" 
+#       }
+#     }
+#   }
+# ]
+# DEFINITION
 
-  network_configuration {
-    security_groups = ["${aws_security_group.ecs_sg.id}"]
-    subnets         = var.es_subnets
-    # TODO: remove this after setting up privatelink
-    assign_public_ip = true
-  }
+#   depends_on = [aws_cloudwatch_log_group.ecs_connector]
+# }
 
-  depends_on = [aws_iam_policy.ecs_task_definition_policy]
-}
+# resource "aws_cloudwatch_log_group" "ecs_connector" {
+#   name = "/ecs/bexh-connector-${var.env_name}-${var.account_id}"
+# }
 
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name               = "ecs-task-execution-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy_doc.json
-}
+# resource "aws_ecs_service" "main" {
+#   name            = "bexh-ecs-service-${var.env_name}-${var.account_id}"
+#   cluster         = aws_ecs_cluster.main.id
+#   task_definition = aws_ecs_task_definition.app.arn
+#   # task_definition      = "${aws_ecs_task_definition.app.family}:${aws_ecs_task_definition.app.revision}"
+#   desired_count        = 0
+#   launch_type          = "FARGATE"
+#   force_new_deployment = true
 
-resource "aws_iam_role_policy_attachment" "ecs_execution_role_attachment" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
+#   network_configuration {
+#     security_groups = ["${aws_security_group.ecs_sg.id}"]
+#     subnets         = var.es_subnets
+#     # TODO: remove this after setting up privatelink
+#     assign_public_ip = true
+#   }
 
-data "aws_iam_policy_document" "ecs_assume_role_policy_doc" {
-  statement {
-    actions = ["sts:AssumeRole"]
+#   depends_on = [aws_iam_policy.ecs_task_definition_policy]
+# }
 
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
+# resource "aws_iam_role" "ecs_task_execution_role" {
+#   name               = "ecs-task-execution-role-${var.env_name}-${var.account_id}"
+#   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy_doc.json
+# }
 
-resource "aws_iam_role" "ecs_task_definition_role" {
-  name               = "ecs-task-definition-role-${var.env_name}-${data.aws_caller_identity.current.account_id}"
-  assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy_doc.json
-}
+# resource "aws_iam_role_policy_attachment" "ecs_execution_role_attachment" {
+#   role       = aws_iam_role.ecs_task_execution_role.name
+#   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+# }
 
-resource "aws_iam_role_policy_attachment" "ecs_service_role_attachment" {
-  role       = aws_iam_role.ecs_task_definition_role.name
-  policy_arn = aws_iam_policy.ecs_task_definition_policy.arn
-}
+# data "aws_iam_policy_document" "ecs_assume_role_policy_doc" {
+#   statement {
+#     actions = ["sts:AssumeRole"]
 
-resource "aws_iam_policy" "ecs_task_definition_policy" {
-  name = "bexh-service-policy-${var.env_name}-${data.aws_caller_identity.current.account_id}"
+#     principals {
+#       type        = "Service"
+#       identifiers = ["ecs-tasks.amazonaws.com"]
+#     }
+#   }
+# }
 
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-    {
-        "Effect": "Allow",
-        "Action": [
-          "dynamodb:*"
-        ],
-        "Resource": "*"
-        }
-    ]
-}
-EOF
-}
+# resource "aws_iam_role" "ecs_task_definition_role" {
+#   name               = "ecs-task-definition-role-${var.env_name}-${var.account_id}"
+#   assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy_doc.json
+# }
+
+# resource "aws_iam_role_policy_attachment" "ecs_service_role_attachment" {
+#   role       = aws_iam_role.ecs_task_definition_role.name
+#   policy_arn = aws_iam_policy.ecs_task_definition_policy.arn
+# }
+
+# resource "aws_iam_policy" "ecs_task_definition_policy" {
+#   name = "bexh-service-policy-${var.env_name}-${var.account_id}"
+
+#   policy = <<EOF
+# {
+#     "Version": "2012-10-17",
+#     "Statement": [
+#     {
+#         "Effect": "Allow",
+#         "Action": [
+#           "dynamodb:*"
+#         ],
+#         "Resource": "*"
+#         }
+#     ]
+# }
+# EOF
+# }

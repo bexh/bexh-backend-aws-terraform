@@ -43,6 +43,7 @@ module "bexh_event_connector_service" {
 
   name            = "exch-event-connector"
   cluster_id      = aws_ecs_cluster.this.id
+  instance_count = var.event_connector_instance_count
   env_name        = var.env_name
   account_id      = var.account_id
   ecr_repository  = "bexh-event-connector-aws-ecs"
@@ -88,6 +89,7 @@ module "bexh_trade_executor_service" {
 
   name            = "exch-trade-executor"
   cluster_id      = aws_ecs_cluster.this.id
+  instance_count = var.trade_executor_instance_count
   env_name        = var.env_name
   account_id      = var.account_id
   ecr_repository  = "bexh-trade-executor-aws-ecs"
@@ -144,17 +146,17 @@ resource "aws_dynamodb_table" "trade_executor_kcl_state_manager" {
 
 resource "aws_kinesis_stream" "incoming_bets" {
   name        = "bexh-exch-bets-in-${var.env_name}-${var.account_id}"
-  shard_count = 1
+  shard_count = var.incoming_bets_shard_count
 }
 
 resource "aws_kinesis_stream" "outgoing_events" {
   name        = "bexh-exch-events-out-${var.env_name}-${var.account_id}"
-  shard_count = 1
+  shard_count = var.outgoing_events_shard_count
 }
 
 resource "aws_kinesis_stream" "outgoing_bets" {
   name        = "bexh-exch-bets-out-${var.env_name}-${var.account_id}"
-  shard_count = 1
+  shard_count = var.outgoing_bets_shard_count
 }
 
 // region: kinesis firehose & s3

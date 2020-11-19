@@ -1,17 +1,21 @@
 variable "whitelisted_ips" {
-  type    = list(string)
+  type = list(string)
 }
 
 variable "env_name" {
-  type    = string
+  type = string
 }
 
 variable "log_level" {
-  type    = string
+  type = string
+}
+
+variable "account_id" {
+  type = string
 }
 
 variable "bexh_api_lambda_s3_version" {
-  type    = string
+  type = string
 }
 
 variable "es_domain" {
@@ -43,12 +47,12 @@ variable "twilio_api_key" {
 }
 
 variable "base_url" {
-  type = string
+  type        = string
   description = "Base url where website is hosted given the env"
 }
 
 variable "bexh_email" {
-  type = string
+  type        = string
   description = "Sender email address for mailer lambda"
 }
 
@@ -57,6 +61,11 @@ variable "bexh_bet_submit_lambda_s3_version" {
 }
 
 variable "connector_image_tag" {
-  type = string
+  type        = string
   description = "tag of bexh connector from ecr image"
+}
+
+variable "connector_instance_count" {
+  type        = number
+  description = "number of ecs instances"
 }

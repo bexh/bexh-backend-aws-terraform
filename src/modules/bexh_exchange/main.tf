@@ -204,7 +204,7 @@ resource "aws_elasticache_replication_group" "this" {
   node_type                     = "cache.t2.micro"
   port                          = 6379
   engine_version                = "6.0.5"
-  security_group_ids            = [var.aws_security_group.ecs_sg]
+  security_group_ids            = [aws_security_group.ecs_sg.id]
 
   cluster_mode {
     replicas_per_node_group = 0

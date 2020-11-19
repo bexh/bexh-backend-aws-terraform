@@ -43,7 +43,7 @@ module "bexh_event_connector_service" {
 
   name            = "exch-event-connector"
   cluster_id      = aws_ecs_cluster.this.id
-  instance_count = var.event_connector_instance_count
+  instance_count  = var.event_connector_instance_count
   env_name        = var.env_name
   account_id      = var.account_id
   ecr_repository  = "bexh-event-connector-aws-ecs"
@@ -51,45 +51,45 @@ module "bexh_event_connector_service" {
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
-  env_vars        = [
+  env_vars = [
     {
-        name = "LOG_LEVEL"
-        value = var.log_level
+      name  = "LOG_LEVEL"
+      value = var.log_level
     },
     {
-        name = "ENV_NAME"
-        value = var.env_name
+      name  = "ENV_NAME"
+      value = var.env_name
     },
     {
-        name = "REDIS_PORT"
-        value = aws_elasticache_replication_group.this.port
+      name  = "REDIS_PORT"
+      value = aws_elasticache_replication_group.this.port
     },
     {
-        name = "REDIS_HOST"
-        value = aws_elasticache_replication_group.this.configuration_endpoint_address
+      name  = "REDIS_HOST"
+      value = aws_elasticache_replication_group.this.configuration_endpoint_address
     },
     {
-        name = "INCOMING_BETS_KINESIS_STREAM_NAME"
-        value = aws_kinesis_stream.incoming_bets.name
+      name  = "INCOMING_BETS_KINESIS_STREAM_NAME"
+      value = aws_kinesis_stream.incoming_bets.name
     },
     {
-        name = "OUTGOING_EVENTS_KINESIS_STREAM_NAME"
-        value = aws_kinesis_stream.outgoing_events.name
+      name  = "OUTGOING_EVENTS_KINESIS_STREAM_NAME"
+      value = aws_kinesis_stream.outgoing_events.name
     },
     {
-        name = "OUTGOING_BETS_KINESIS_STREAM_NAME"
-        value = aws_kinesis_stream.outgoing_bets.name
+      name  = "OUTGOING_BETS_KINESIS_STREAM_NAME"
+      value = aws_kinesis_stream.outgoing_bets.name
     }
   ]
 }
-       
+
 
 module "bexh_trade_executor_service" {
   source = "../bexh_ecs_service"
 
   name            = "exch-trade-executor"
   cluster_id      = aws_ecs_cluster.this.id
-  instance_count = var.trade_executor_instance_count
+  instance_count  = var.trade_executor_instance_count
   env_name        = var.env_name
   account_id      = var.account_id
   ecr_repository  = "bexh-trade-executor-aws-ecs"
@@ -97,34 +97,34 @@ module "bexh_trade_executor_service" {
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
-  env_vars        = [
+  env_vars = [
     {
-        name = "LOG_LEVEL"
-        value = var.log_level
+      name  = "LOG_LEVEL"
+      value = var.log_level
     },
     {
-        name = "ENV_NAME"
-        value = var.env_name
+      name  = "ENV_NAME"
+      value = var.env_name
     },
     {
-        name = "REDIS_PORT"
-        value = aws_elasticache_replication_group.this.port
+      name  = "REDIS_PORT"
+      value = aws_elasticache_replication_group.this.port
     },
     {
-        name = "REDIS_HOST"
-        value = aws_elasticache_replication_group.this.configuration_endpoint_address
+      name  = "REDIS_HOST"
+      value = aws_elasticache_replication_group.this.configuration_endpoint_address
     },
     {
-        name = "INCOMING_KINESIS_STREAM_NAME"
-        value = aws_kinesis_stream.incoming_bets.name
+      name  = "INCOMING_KINESIS_STREAM_NAME"
+      value = aws_kinesis_stream.incoming_bets.name
     },
     {
-        name = "OUTGOING_KINESIS_STREAM_NAME"
-        value = aws_kinesis_stream.outgoing_bets.name
+      name  = "OUTGOING_KINESIS_STREAM_NAME"
+      value = aws_kinesis_stream.outgoing_bets.name
     },
     {
-        name = "KCL_STATE_MANAGER_TABLE_NAME"
-        value = aws_dynamodb_table.trade_executor_kcl_state_manager.name
+      name  = "KCL_STATE_MANAGER_TABLE_NAME"
+      value = aws_dynamodb_table.trade_executor_kcl_state_manager.name
     }
   ]
 }
@@ -204,6 +204,7 @@ resource "aws_elasticache_replication_group" "this" {
   node_type                     = "cache.t2.micro"
   port                          = 6379
   engine_version                = "6.0.5"
+  security_group_ids            = [var.aws_security_group.ecs_sg]
 
   cluster_mode {
     replicas_per_node_group = 0

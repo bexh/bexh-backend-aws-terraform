@@ -89,18 +89,5 @@ resource "aws_iam_role_policy_attachment" "ecs_service_role_attachment" {
 resource "aws_iam_policy" "ecs_task_definition_policy" {
   name = "bexh-${var.name}-service-policy-${var.env_name}-${var.account_id}"
 
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-    {
-        "Effect": "Allow",
-        "Action": [
-          "dynamodb:*"
-        ],
-        "Resource": "*"
-        }
-    ]
-}
-EOF
+  policy = var.ecs_task_definition_policy
 }

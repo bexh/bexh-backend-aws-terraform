@@ -17,3 +17,7 @@ output "task_execution_role" {
 output "task_defintiion_role" {
     value = aws_iam_role.ecs_task_definition_role
 }
+
+output "name" {
+    value = var.name
+}

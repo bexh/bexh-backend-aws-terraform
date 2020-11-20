@@ -58,3 +58,8 @@ variable "instance_count" {
     description = "number of ecs task instances"
     default = 0
 }
+
+variable "ecs_task_definition_policy" {
+    type = string
+    description = "json encoded policy document"
+}

@@ -9,6 +9,7 @@ resource "aws_kinesis_firehose_delivery_stream" "this" {
   s3_configuration {
     role_arn   = aws_iam_role.firehose_role.arn
     bucket_arn = aws_s3_bucket.this.arn
+    compression_format = "GZIP"
   }
 
   kinesis_source_configuration {
@@ -61,7 +62,8 @@ resource "aws_iam_policy" "s3_write" {
                 "s3:PutObject"
             ],      
             "Resource": [        
-                "${aws_s3_bucket.this.arn}"	    
+                "${aws_s3_bucket.this.arn}",
+                "${aws_s3_bucket.this.arn}/*"   
             ]    
         },        
         {

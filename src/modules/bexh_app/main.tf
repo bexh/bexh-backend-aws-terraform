@@ -335,6 +335,10 @@ module "bexh_bet_status_change_sns_lambda" {
 resource "aws_kinesis_stream" "this" {
   name        = "bexh-exchange-bet-${var.env_name}-${var.account_id}"
   shard_count = 1
+  shard_level_metrics = [
+    "IncomingRecords",
+    "OutgoingRecords"
+  ]
 }
 
 module "bexh_bet_submit_lambda" {
@@ -422,29 +426,29 @@ resource "aws_ecs_cluster" "this" {
 module "bexh_connector_service" {
   source = "../bexh_ecs_service"
 
-  name                       = "connector"
-  cluster_id                 = aws_ecs_cluster.this.id
-  env_name                   = var.env_name
-  account_id                 = var.account_id
-  ecr_repository             = "bexh-connector-aws-ecs"
-  image_tag                  = var.connector_image_tag
-  security_groups            = ["${aws_security_group.ecs_sg.id}"]
-  log_level                  = var.log_level
-  subnets                    = var.es_subnets
-  env_vars                   = []
-  instance_count             = var.connector_instance_count
+  name            = "connector"
+  cluster_id      = aws_ecs_cluster.this.id
+  env_name        = var.env_name
+  account_id      = var.account_id
+  ecr_repository  = "bexh-connector-aws-ecs"
+  image_tag       = var.connector_image_tag
+  security_groups = ["${aws_security_group.ecs_sg.id}"]
+  log_level       = var.log_level
+  subnets         = var.es_subnets
+  env_vars        = []
+  instance_count  = var.connector_instance_count
   ecs_task_definition_policy = jsonencode({
     "Version" = "2012-10-17"
     "Statement" = [
       {
         "Effect" = "Allow"
         "Action" = [
-            "kinesis:PutRecord",
-            "kinesis:PutRecords"
+          "kinesis:PutRecord",
+          "kinesis:PutRecords"
         ]
         "Resource" = "*"
       }
     ]
-})
+  })
 
 }

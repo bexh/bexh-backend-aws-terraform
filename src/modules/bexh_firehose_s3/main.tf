@@ -61,7 +61,8 @@ resource "aws_iam_policy" "s3_write" {
                 "s3:PutObject"
             ],      
             "Resource": [        
-                "${aws_s3_bucket.this.arn}"	    
+                "${aws_s3_bucket.this.arn}",
+                "${aws_s3_bucket.this.arn}/*"   
             ]    
         },        
         {

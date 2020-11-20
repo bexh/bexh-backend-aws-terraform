@@ -80,19 +80,19 @@ module "bexh_event_connector_service" {
   ecs_task_definition_policy = jsonencode({
     "Version" = "2012-10-17"
     "Statement" = [
-        {
-            "Effect" = "Allow"
-            "Action" = [
-                "kinesis:PutRecord",
-                "kinesis:PutRecords"
-            ]
-            "Resource" = [
-                "${aws_kinesis_stream.incoming_bets.arn}",
-                "${aws_kinesis_stream.outgoing_events.arn}"
-            ]
-        }
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "kinesis:PutRecord",
+          "kinesis:PutRecords"
+        ]
+        "Resource" = [
+          "${aws_kinesis_stream.incoming_bets.arn}",
+          "${aws_kinesis_stream.outgoing_events.arn}"
+        ]
+      }
     ]
-})
+  })
 
 }
 
@@ -143,31 +143,31 @@ module "bexh_trade_executor_service" {
   ecs_task_definition_policy = jsonencode({
     "Version" = "2012-10-17"
     "Statement" = [
-            {
-                "Effect" = "Allow"
-                "Action" = [
-                    "kinesis:PutRecord",
-                    "kinesis:PutRecords"
-                ]
-                "Resource" = "${aws_kinesis_stream.incoming_bets.arn}"
-            },
-            {
-                "Effect" = "Allow"
-                "Action" = [
-                    "kinesis:PutRecord",
-                    "kinesis:PutRecords"
-                ]
-                "Resource" = "${aws_kinesis_stream.outgoing_bets.arn}"
-            },
-            {
-                "Effect" = "Allow"
-                "Action" = [
-                    "dynamodb:*"
-                ]
-                "Resource" = "${aws_dynamodb_table.trade_executor_kcl_state_manager.arn}"
-            }
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "kinesis:PutRecord",
+          "kinesis:PutRecords"
         ]
-    })
+        "Resource" = "${aws_kinesis_stream.incoming_bets.arn}"
+      },
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "kinesis:PutRecord",
+          "kinesis:PutRecords"
+        ]
+        "Resource" = "${aws_kinesis_stream.outgoing_bets.arn}"
+      },
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "dynamodb:*"
+        ]
+        "Resource" = "${aws_dynamodb_table.trade_executor_kcl_state_manager.arn}"
+      }
+    ]
+  })
 
 }
 
@@ -189,16 +189,28 @@ resource "aws_dynamodb_table" "trade_executor_kcl_state_manager" {
 resource "aws_kinesis_stream" "incoming_bets" {
   name        = "bexh-exch-bets-in-${var.env_name}-${var.account_id}"
   shard_count = var.incoming_bets_shard_count
+  shard_level_metrics = [
+    "IncomingRecords",
+    "OutgoingRecords"
+  ]
 }
 
 resource "aws_kinesis_stream" "outgoing_events" {
   name        = "bexh-exch-events-out-${var.env_name}-${var.account_id}"
   shard_count = var.outgoing_events_shard_count
+  shard_level_metrics = [
+    "IncomingRecords",
+    "OutgoingRecords"
+  ]
 }
 
 resource "aws_kinesis_stream" "outgoing_bets" {
   name        = "bexh-exch-bets-out-${var.env_name}-${var.account_id}"
   shard_count = var.outgoing_bets_shard_count
+  shard_level_metrics = [
+    "IncomingRecords",
+    "OutgoingRecords"
+  ]
 }
 
 // region: kinesis firehose & s3

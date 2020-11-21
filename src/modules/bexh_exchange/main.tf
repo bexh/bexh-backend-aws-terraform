@@ -310,7 +310,17 @@ module "bexh_redis_ui" {
   ]
   ecs_task_definition_policy = jsonencode({
     "Version"   = "2012-10-17"
-    "Statement" = []
+    "Statement" = [
+        {
+            "Effect" = "Allow"
+            "Action" = [
+                "secretsmanager:GetSecretValue"
+            ],
+            "Resource": [
+                "arn:aws:secretsmanager:${var.region}:${var.account_id}:*"
+            ]
+        }
+    ]
   })
 
 }

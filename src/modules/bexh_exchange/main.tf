@@ -18,11 +18,11 @@ resource "aws_security_group" "ecs_sg" {
 
   # TODO: replace this with privatelink https://aws.amazon.com/blogs/compute/setting-up-aws-privatelink-for-amazon-ecs-and-amazon-ecr/
   ingress {
-    description = "Http inbound for ecr"
+    description = "Http inbound for redis commander"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.whitelisted_ips
   }
 
   egress {
@@ -329,5 +329,6 @@ module "bexh_redis_ui" {
     ]
   })
 
+    depends_on = [aws_elasticache_replication_group.this]
 }
 

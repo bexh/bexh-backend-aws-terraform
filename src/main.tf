@@ -43,6 +43,7 @@ module "bexh_exchange" {
   source = "./modules/bexh_exchange"
 
   region = data.aws_region.current.name
+  whitelisted_ips = var.whitelisted_ips
   env_name = var.env_name
   log_level = var.log_level
   account_id = data.aws_caller_identity.current.account_id

@@ -13,24 +13,24 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 module "container_definition" {
-    source = "github.com/mongodb/terraform-aws-ecs-task-definition"
+  source = "github.com/mongodb/terraform-aws-ecs-task-definition"
 
-    name = var.name
-    family = "bexh-${var.name}-${var.env_name}-${var.account_id}"
-    cpu = 128
-    environment = var.env_vars
-    image = var.image
-    memory = 128
-    network_mode = "awsvpc"
-    portMappings = var.portMappings
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        awslogs-group = "${aws_cloudwatch_log_group.this.name}"
-        awslogs-region = "${var.region}"
-        awslogs-stream-prefix = "ecs" 
-      }
+  name         = var.name
+  family       = "bexh-${var.name}-${var.env_name}-${var.account_id}"
+  cpu          = 128
+  environment  = var.env_vars
+  image        = var.image
+  memory       = 128
+  network_mode = "awsvpc"
+  portMappings = var.portMappings
+  logConfiguration = {
+    logDriver = "awslogs"
+    options = {
+      awslogs-group         = "${aws_cloudwatch_log_group.this.name}"
+      awslogs-region        = "${var.region}"
+      awslogs-stream-prefix = "ecs"
     }
+  }
 }
 
 resource "aws_cloudwatch_log_group" "this" {
@@ -42,8 +42,8 @@ resource "aws_ecs_service" "main" {
   cluster         = var.cluster_id
   task_definition = aws_ecs_task_definition.this.arn
   # task_definition      = "${aws_ecs_task_definition.this.family}:${aws_ecs_task_definition.this.revision}"
-  desired_count        = var.instance_count
-  launch_type          = "FARGATE"
+  desired_count = var.instance_count
+  launch_type   = "FARGATE"
 
   network_configuration {
     security_groups = var.security_groups
@@ -53,49 +53,53 @@ resource "aws_ecs_service" "main" {
   }
 
   dynamic "load_balancer" {
-      for_each = var.load_balancer ? [1] : []
+    for_each = var.load_balancer ? [1] : []
 
-      content {
-          target_group_arn = aws_lb_target_group.ecs_target[0].arn
-          container_name = var.name
-          container_port = var.portMappings[0].containerPort
-      }
+    content {
+      target_group_arn = aws_lb_target_group.ecs_target[0].arn
+      container_name   = var.name
+      container_port   = var.portMappings[0].containerPort
+    }
   }
 
-  depends_on = [aws_iam_policy.ecs_task_definition_policy]
+  depends_on = [
+    aws_iam_policy.ecs_task_definition_policy,
+    aws_lb_listener.this,
+    aws_lb.this
+  ]
 }
 
 resource "aws_lb_target_group" "ecs_target" {
-    count = var.load_balancer ? 1 : 0
+  count = var.load_balancer ? 1 : 0
 
-    name = "bexh-${var.name}-tg-${var.env_name}"
-    port = var.portMappings[0].hostPort
-    protocol = "HTTP"
-    target_type = "ip"
-    vpc_id = var.vpc
+  name        = "bexh-${var.name}-tg-${var.env_name}"
+  port        = var.portMappings[0].hostPort
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc
 }
 
 resource "aws_lb" "this" {
-    count = var.load_balancer ? 1 : 0
+  count = var.load_balancer ? 1 : 0
 
-    name = "bexh-${var.name}-lb-${var.env_name}"
-    internal = false
-    load_balancer_type = "application"
-    security_groups = var.security_groups
-    subnets = var.subnets
+  name               = "bexh-${var.name}-lb-${var.env_name}"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = var.security_groups
+  subnets            = var.subnets
 }
 
 resource "aws_lb_listener" "this" {
-    count = var.load_balancer ? 1 : 0
+  count = var.load_balancer ? 1 : 0
 
-    load_balancer_arn = aws_lb.this[0].arn
-    port = 80
-    protocol = "HTTP"
+  load_balancer_arn = aws_lb.this[0].arn
+  port              = 80
+  protocol          = "HTTP"
 
-    default_action {
-        target_group_arn = aws_lb_target_group.ecs_target[0].arn
-        type = "forward"
-    }
+  default_action {
+    target_group_arn = aws_lb_target_group.ecs_target[0].arn
+    type             = "forward"
+  }
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {

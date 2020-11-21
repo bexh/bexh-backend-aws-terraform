@@ -52,7 +52,28 @@ resource "aws_ecs_service" "main" {
     assign_public_ip = true
   }
 
+  dynamic "load_balancer" {
+      for_each = var.load_balancer ? [1] : []
+
+      content {
+          target_group_arn = aws_lb_target_group.ecs_target[0].arn
+          container_name = var.name
+          container_port = var.portMappings[0].containerPort
+      }
+  }
+
   depends_on = [aws_iam_policy.ecs_task_definition_policy]
+}
+
+resource "aws_lb_target_group" "ecs_target" {
+    count = var.load_balancer ? 1 : 0
+
+    // NOTE: had to drop account_id as limit is 32 chars
+    name = "bexh-${var.name}-tg-${var.env_name}"
+    port = 80
+    protocol = "HTTP"
+    target_type = "ip"
+    vpc_id = var.vpc
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {

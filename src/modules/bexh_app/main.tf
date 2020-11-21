@@ -430,6 +430,7 @@ module "bexh_connector_service" {
   cluster_id      = aws_ecs_cluster.this.id
   env_name        = var.env_name
   account_id      = var.account_id
+  vpc             = var.vpc
   region          = var.region
   image           = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}"
   security_groups = ["${aws_security_group.ecs_sg.id}"]

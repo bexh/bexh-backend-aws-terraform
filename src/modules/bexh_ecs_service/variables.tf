@@ -14,6 +14,11 @@ variable "account_id" {
     type = string
 }
 
+variable "vpc" {
+    type = string
+    description = "vpc id"
+}
+
 variable "security_groups" {
     type = list(string)
 }
@@ -63,4 +68,9 @@ variable "image" {
 variable "portMappings" {
     type = list(map(string))
     default = []
+}
+
+variable "load_balancer" {
+    type = bool
+    default = false
 }

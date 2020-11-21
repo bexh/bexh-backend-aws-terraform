@@ -46,6 +46,7 @@ module "bexh_event_connector_service" {
   instance_count  = var.event_connector_instance_count
   env_name        = var.env_name
   account_id      = var.account_id
+  vpc             = var.vpc
   region          = var.region
   image           = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/bexh-event-connector-aws-ecs:${var.event_connector_image_tag}"
   security_groups = ["${aws_security_group.ecs_sg.id}"]
@@ -105,6 +106,7 @@ module "bexh_trade_executor_service" {
   instance_count  = var.trade_executor_instance_count
   env_name        = var.env_name
   account_id      = var.account_id
+  vpc             = var.vpc
   region          = var.region
   image           = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/bexh-trade-executor-aws-ecs:${var.trade_executor_image_tag}"
   security_groups = ["${aws_security_group.ecs_sg.id}"]
@@ -285,16 +287,18 @@ module "bexh_redis_ui" {
   instance_count  = 1
   env_name        = var.env_name
   account_id      = var.account_id
+  vpc             = var.vpc
   region          = var.region
   image           = "rediscommander/redis-commander:latest"
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
+  load_balancer   = true
   portMappings = [
-      {
-          "containerPort" = 8081
-          "hostPort" = 8081
-      }
+    {
+      "containerPort" = 8081
+      "hostPort"      = 8081
+    }
   ]
   env_vars = [
     {
@@ -315,20 +319,20 @@ module "bexh_redis_ui" {
     }
   ]
   ecs_task_definition_policy = jsonencode({
-    "Version"   = "2012-10-17"
+    "Version" = "2012-10-17"
     "Statement" = [
-        {
-            "Effect" = "Allow"
-            "Action" = [
-                "secretsmanager:GetSecretValue"
-            ],
-            "Resource": [
-                "arn:aws:secretsmanager:${var.region}:${var.account_id}:*"
-            ]
-        }
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Resource" : [
+          "arn:aws:secretsmanager:${var.region}:${var.account_id}:*"
+        ]
+      }
     ]
   })
 
-    depends_on = [aws_elasticache_replication_group.this]
+  depends_on = [aws_elasticache_replication_group.this]
 }
 

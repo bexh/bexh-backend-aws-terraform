@@ -70,10 +70,33 @@ resource "aws_lb_target_group" "ecs_target" {
 
     // NOTE: had to drop account_id as limit is 32 chars
     name = "bexh-${var.name}-tg-${var.env_name}"
-    port = 80
+    port = var.portMappings[0].hostPort
     protocol = "HTTP"
     target_type = "ip"
     vpc_id = var.vpc
+}
+
+resource "aws_lb" "this" {
+    count = var.load_balancer ? 1 : 0
+
+    name = "bexh-${var.name}-lb-${var.env_name}"
+    internal = false
+    load_balancer_type = "application"
+    security_groups = var.security_groups
+    subnets = var.subnets
+}
+
+resource "aws_lb_listener" "this" {
+    count = var.load_balancer ? 1 : 0
+
+    load_balancer_arn = aws_lb.this[0].arn
+    port = 80
+    protocol = "HTTP"
+
+    default_action {
+        target_group_arn = aws_lb_target_group.ecs_target[0].arn
+        type = "forward"
+    }
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {

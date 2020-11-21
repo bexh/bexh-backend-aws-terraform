@@ -290,6 +290,12 @@ module "bexh_redis_ui" {
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
+  portMappings = [
+      {
+          "containerPort" = 8081
+          "hostPort" = 8081
+      }
+  ]
   env_vars = [
     {
       name  = "REDIS_PORT"

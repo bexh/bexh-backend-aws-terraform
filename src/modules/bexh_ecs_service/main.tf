@@ -22,7 +22,7 @@ module "container_definition" {
     image = var.image
     memory = 128
     network_mode = "awsvpc"
-    portMappings = []
+    portMappings = var.portMappings
     logConfiguration = {
       logDriver = "awslogs"
       options = {

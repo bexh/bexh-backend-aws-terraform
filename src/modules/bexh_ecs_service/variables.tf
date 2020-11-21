@@ -59,3 +59,8 @@ variable "image" {
     type = string
     description = "path to image"
 }
+
+variable "portMappings" {
+    type = list(map(string))
+    default = []
+}

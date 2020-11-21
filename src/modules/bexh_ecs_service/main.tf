@@ -68,7 +68,6 @@ resource "aws_ecs_service" "main" {
 resource "aws_lb_target_group" "ecs_target" {
     count = var.load_balancer ? 1 : 0
 
-    // NOTE: had to drop account_id as limit is 32 chars
     name = "bexh-${var.name}-tg-${var.env_name}"
     port = var.portMappings[0].hostPort
     protocol = "HTTP"

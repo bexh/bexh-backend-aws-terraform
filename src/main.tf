@@ -20,6 +20,7 @@ data "aws_caller_identity" "current" {}
 module "bexh_app" {
   source = "./modules/bexh_app"
 
+  region = data.aws_region.current.name
   whitelisted_ips = var.whitelisted_ips
   env_name = var.env_name
   log_level = var.log_level

@@ -46,8 +46,8 @@ module "bexh_event_connector_service" {
   instance_count  = var.event_connector_instance_count
   env_name        = var.env_name
   account_id      = var.account_id
-  ecr_repository  = "bexh-event-connector-aws-ecs"
-  image_tag       = var.event_connector_image_tag
+  region          = var.region
+  image           = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/bexh-event-connector-aws-ecs:${var.event_connector_image_tag}"
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
@@ -105,8 +105,8 @@ module "bexh_trade_executor_service" {
   instance_count  = var.trade_executor_instance_count
   env_name        = var.env_name
   account_id      = var.account_id
-  ecr_repository  = "bexh-trade-executor-aws-ecs"
-  image_tag       = var.trade_executor_image_tag
+  region          = var.region
+  image           = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/bexh-trade-executor-aws-ecs:${var.trade_executor_image_tag}"
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
@@ -251,11 +251,6 @@ module "outgoing_events_kinesis_firehose_s3" {
 
 // region: elasticache redis
 
-# resource "aws_elasticache_cluster" "this" {
-#   cluster_id           = "bexh-exch-mktbk-${var.env_name}-${var.account_id}"
-#   replication_group_id = aws_elasticache_replication_group.this.id
-# }
-
 resource "aws_elasticache_replication_group" "this" {
   automatic_failover_enabled    = true
   replication_group_id          = "bexh-exch-mktbk-rep-${var.env_name}-${var.account_id}"
@@ -280,5 +275,43 @@ resource "aws_elasticache_parameter_group" "this" {
     name  = "cluster-enabled"
     value = "yes"
   }
+}
+
+module "bexh_redis_ui" {
+  source = "../bexh_ecs_service"
+
+  name            = "exch-redis-ui"
+  cluster_id      = aws_ecs_cluster.this.id
+  instance_count  = 1
+  env_name        = var.env_name
+  account_id      = var.account_id
+  region          = var.region
+  image           = "rediscommander/redis-commander:latest"
+  security_groups = ["${aws_security_group.ecs_sg.id}"]
+  log_level       = var.log_level
+  subnets         = var.es_subnets
+  env_vars = [
+    {
+      name  = "REDIS_PORT"
+      value = aws_elasticache_replication_group.this.port
+    },
+    {
+      name  = "REDIS_HOST"
+      value = aws_elasticache_replication_group.this.configuration_endpoint_address
+    },
+    {
+      name  = "HTTP_USER"
+      value = "root"
+    },
+    {
+      name  = "HTTP_PASSWORD"
+      value = "qwerty"
+    }
+  ]
+  ecs_task_definition_policy = jsonencode({
+    "Version"   = "2012-10-17"
+    "Statement" = []
+  })
+
 }
 

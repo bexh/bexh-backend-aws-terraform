@@ -14,6 +14,10 @@ variable "account_id" {
   type = string
 }
 
+variable "region" {
+    type = string
+}
+
 variable "bexh_api_lambda_s3_version" {
   type = string
 }

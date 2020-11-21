@@ -14,14 +14,6 @@ variable "account_id" {
     type = string
 }
 
-variable "ecr_repository" {
-    type = string
-}
-
-variable "image_tag" {
-    type = string
-}
-
 variable "security_groups" {
     type = list(string)
 }
@@ -38,7 +30,6 @@ variable "memory" {
 
 variable "region" {
     type = string
-    default = "us-east-1"
 }
 
 variable "log_level" {
@@ -62,4 +53,9 @@ variable "instance_count" {
 variable "ecs_task_definition_policy" {
     type = string
     description = "json encoded policy document"
+}
+
+variable "image" {
+    type = string
+    description = "path to image"
 }

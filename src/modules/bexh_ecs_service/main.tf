@@ -19,7 +19,7 @@ module "container_definition" {
     family = "bexh-${var.name}-${var.env_name}-${var.account_id}"
     cpu = 128
     environment = var.env_vars
-    image = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_repository}:${var.image_tag}"
+    image = var.image
     memory = 128
     network_mode = "awsvpc"
     portMappings = []

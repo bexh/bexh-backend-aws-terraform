@@ -74,3 +74,8 @@ variable "load_balancer" {
     type = bool
     default = false
 }
+
+variable "secrets" {
+    type = list(map(string))
+    default = []
+}

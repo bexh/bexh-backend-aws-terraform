@@ -13,7 +13,7 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 module "container_definition" {
-  source = "github.com/mongodb/terraform-aws-ecs-task-definition"
+  source = "../terraform_aws_ecs_task_definition"
 
   name         = var.name
   family       = "bexh-${var.name}-${var.env_name}-${var.account_id}"
@@ -23,6 +23,7 @@ module "container_definition" {
   memory       = 128
   network_mode = "awsvpc"
   portMappings = var.portMappings
+  secrets      = var.secrets
   logConfiguration = {
     logDriver = "awslogs"
     options = {
@@ -121,6 +122,31 @@ data "aws_iam_policy_document" "ecs_assume_role_policy_doc" {
       identifiers = ["ecs-tasks.amazonaws.com"]
     }
   }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_execution_role_attach_get_secret" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.secrets.arn
+}
+
+resource "aws_iam_policy" "secrets" {
+  name        = "bexh-get-secrets-${var.env_name}-${var.account_id}"
+  description = "Allows ecs to use secrets as env vars in container definition"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = [
+          "arn:aws:secretsmanager:${var.region}:${var.account_id}:*"
+        ]
+      }
+    ]
+  })
 }
 
 resource "aws_iam_role" "ecs_task_definition_role" {

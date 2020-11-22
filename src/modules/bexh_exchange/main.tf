@@ -308,14 +308,16 @@ module "bexh_redis_ui" {
     {
       name  = "REDIS_HOST"
       value = aws_elasticache_replication_group.this.configuration_endpoint_address
+    }
+  ]
+  secrets = [
+    {
+      name      = "HTTP_USER"
+      valueFrom = "arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:redis-commander-bsijkL:user::"
     },
     {
-      name  = "HTTP_USER"
-      value = "root"
-    },
-    {
-      name  = "HTTP_PASSWORD"
-      value = "qwerty"
+      name      = "HTTP_PASSWORD"
+      valueFrom = "arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:redis-commander-bsijkL:password::"
     }
   ]
   ecs_task_definition_policy = jsonencode({
@@ -325,8 +327,8 @@ module "bexh_redis_ui" {
         "Effect" = "Allow"
         "Action" = [
           "secretsmanager:GetSecretValue"
-        ],
-        "Resource" : [
+        ]
+        "Resource" = [
           "arn:aws:secretsmanager:${var.region}:${var.account_id}:*"
         ]
       }

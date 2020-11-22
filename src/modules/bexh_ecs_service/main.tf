@@ -130,7 +130,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_role_attach_get_secret"
 }
 
 resource "aws_iam_policy" "secrets" {
-  name        = "bexh-get-secrets-${var.env_name}-${var.account_id}"
+  name        = "bexh-${var.name}-get-secrets-${var.env_name}-${var.account_id}"
   description = "Allows ecs to use secrets as env vars in container definition"
 
   policy = jsonencode({

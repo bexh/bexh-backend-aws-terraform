@@ -9,7 +9,10 @@ resource "aws_ecs_task_definition" "this" {
 
   container_definitions = module.container_definition.container_definitions
 
-  depends_on = [aws_cloudwatch_log_group.this]
+  depends_on = [
+      aws_cloudwatch_log_group.this,
+      aws_iam_role.ecs_task_execution_role
+    ]
 }
 
 module "container_definition" {

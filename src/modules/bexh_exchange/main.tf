@@ -310,16 +310,16 @@ module "bexh_redis_ui" {
       value = aws_elasticache_replication_group.this.configuration_endpoint_address
     }
   ]
-  secrets = []
-  #   {
-  #     name      = "HTTP_USER"
-  #     valueFrom = "arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:redis-commander-bsijkL:user::"
-  #   },
-  #   {
-  #     name      = "HTTP_PASSWORD"
-  #     valueFrom = "arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:redis-commander-bsijkL:password::"
-  #   }
-  # ]
+  secrets = [
+    {
+      name      = "HTTP_USER"
+      valueFrom = "arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:redis-commander-bsijkL:user::"
+    },
+    {
+      name      = "HTTP_PASSWORD"
+      valueFrom = "arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:redis-commander-bsijkL:password::"
+    }
+  ]
   ecs_task_definition_policy = jsonencode({
     "Version" = "2012-10-17"
     "Statement" = [

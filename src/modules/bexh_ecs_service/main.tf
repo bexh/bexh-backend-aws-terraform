@@ -127,30 +127,30 @@ data "aws_iam_policy_document" "ecs_assume_role_policy_doc" {
   }
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_execution_role_attach_get_secret" {
-  role       = aws_iam_role.ecs_task_execution_role.name
-  policy_arn = aws_iam_policy.secrets.arn
-}
+# resource "aws_iam_role_policy_attachment" "ecs_execution_role_attach_get_secret" {
+#   role       = aws_iam_role.ecs_task_execution_role.name
+#   policy_arn = aws_iam_policy.secrets.arn
+# }
 
-resource "aws_iam_policy" "secrets" {
-  name        = "bexh-${var.name}-get-secrets-${var.env_name}-${var.account_id}"
-  description = "Allows ecs to use secrets as env vars in container definition"
+# resource "aws_iam_policy" "secrets" {
+#   name        = "bexh-${var.name}-get-secrets-${var.env_name}-${var.account_id}"
+#   description = "Allows ecs to use secrets as env vars in container definition"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Resource = [
-          "arn:aws:secretsmanager:${var.region}:${var.account_id}:*"
-        ]
-      }
-    ]
-  })
-}
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "secretsmanager:GetSecretValue"
+#         ]
+#         Resource = [
+#           "arn:aws:secretsmanager:${var.region}:${var.account_id}:*"
+#         ]
+#       }
+#     ]
+#   })
+# }
 
 resource "aws_iam_role" "ecs_task_definition_role" {
   name               = "ecs-${var.name}-task-def-role-${var.env_name}-${var.account_id}"

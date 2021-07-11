@@ -423,10 +423,23 @@ resource "aws_ecs_cluster" "this" {
   name = "bexh-cluster-${var.env_name}-${var.account_id}"
 }
 
-module "bexh_connector_service" {
+// section: bexh app event connector
+
+resource "aws_dynamodb_table" "event_connector_kcl_state_manager" {
+  name         = "bexh-app-event-connector-kcl-st-mgmt-${var.env_name}-${var.account_id}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "shard"
+
+  attribute {
+    name = "shard"
+    type = "S"
+  }
+}
+
+module "bexh_app_event_connector_service" {
   source = "../bexh_ecs_service"
 
-  name            = "connector"
+  name            = "event-connector"
   cluster_id      = aws_ecs_cluster.this.id
   env_name        = var.env_name
   account_id      = var.account_id
@@ -436,7 +449,64 @@ module "bexh_connector_service" {
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
-  env_vars        = []
+  env_vars        = [
+    {
+      name = "LOG_LEVEL"
+      value = var.log_level
+    }
+    {
+      name = "ENV_NAME"
+      value = var.env_name
+    }
+    {
+      name = "MODULE"
+      value = "src.app.event_connector.invoke"
+    }
+    {
+      name = "APP_NAME"
+      value = "event-connector"
+    }
+    {
+      name = "KINESIS_SOURCE_STREAM_NAME"
+      value = "bexh-exch-events-out-${var.env_name}-${var.account_id}"
+    }
+    {
+      name = "KCL_STATE_MANAGER_TABLE_NAME"
+      value = aws_dynamodb_table.event_connector_kcl_state_manager.name
+    }
+    {
+      name = "MYSQL_HOST_URL"
+      value = aws_rds_cluster.this.endpoint
+    }
+    {
+      name = "MYSQL_DATABASE_NAME"
+      value = aws_rds_cluster.this.database_name
+    }
+    {
+      name = "MYSQL_DB_USERNAME"
+      value = local.db_creds.username
+    }
+    {
+      name = "MYSQL_DB_PASSWORD"
+      value = local.db_creds.password
+    }
+    {
+      name = "ES_HOST"
+      value = aws_elasticsearch_domain.es.endpoint
+    }
+    {
+      name = "ES_PORT"
+      value = "9200"
+    }
+    {
+      name = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
+      value = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
+    }
+    {
+      name = "VERIFICATION_EMAIL_SNS_TOPIC_ARN"
+      value = module.bexh_verification_email_sns_lambda.aws_sns_topic.arn
+    }
+  ]
   instance_count  = var.connector_instance_count
   ecs_task_definition_policy = jsonencode({
     "Version" = "2012-10-17"
@@ -445,11 +515,27 @@ module "bexh_connector_service" {
         "Effect" = "Allow"
         "Action" = [
           "kinesis:PutRecord",
-          "kinesis:PutRecords"
+          "kinesis:PutRecords",
+          "kinesis:DescribeStream",
+          "kinesis:GetRecords",
+          "kinesis:GetShardIterator",
+          "sns:Publish",
         ]
-        "Resource" = "*"
+        "Resource" = "bexh-*"
+      },
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "dynamodb:CreateTable",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem"
+        ]
+        "Resource" = aws_dynamodb_table.event_connector_kcl_state_manager.arn
       }
     ]
   })
-
 }

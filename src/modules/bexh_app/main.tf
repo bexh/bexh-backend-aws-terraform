@@ -199,95 +199,95 @@ resource "aws_dynamodb_table" "this" {
 
 // region: ES
 
-# resource "aws_security_group" "es_sg" {
-#   name        = "${var.es_domain}-sg"
-#   description = "Allow inbound traffic to ElasticSearch from VPC CIDR"
-#   vpc_id      = var.vpc
+resource "aws_security_group" "es_sg" {
+  name        = "${var.es_domain}-sg"
+  description = "Allow inbound traffic to ElasticSearch from VPC CIDR"
+  vpc_id      = var.vpc
 
-#   ingress {
-#     from_port = 0
-#     to_port   = 0
-#     protocol  = "-1"
-#     cidr_blocks = [
-#       var.vpc_cidr
-#     ]
-#   }
+  ingress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    cidr_blocks = [
+      var.vpc_cidr
+    ]
+  }
 
-#   ingress {
-#     description = "whitelist IPs"
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = var.whitelisted_ips
-#   }
+  ingress {
+    description = "whitelist IPs"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = var.whitelisted_ips
+  }
 
-#   ingress {
-#     description = "All inbound from sg"
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     self        = true
-#   }
+  ingress {
+    description = "All inbound from sg"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
 
-#   egress {
-#     description = "All outbound"
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 
-# resource "aws_iam_service_linked_role" "es" {
-#   aws_service_name = "es.amazonaws.com"
-#   description      = "Allows Amazon ES to manage AWS resources for a domain on your behalf."
-# }
+resource "aws_iam_service_linked_role" "es" {
+  aws_service_name = "es.amazonaws.com"
+  description      = "Allows Amazon ES to manage AWS resources for a domain on your behalf."
+}
 
-# resource "aws_elasticsearch_domain" "es" {
-#   domain_name           = var.es_domain
-#   elasticsearch_version = "6.8"
+resource "aws_elasticsearch_domain" "es" {
+  domain_name           = var.es_domain
+  elasticsearch_version = "6.8"
 
-#   cluster_config {
-#     instance_type = "t2.medium.elasticsearch"
-#   }
+  cluster_config {
+    instance_type = "t2.medium.elasticsearch"
+  }
 
-#   vpc_options {
-#     subnet_ids         = var.es_subnets
-#     security_group_ids = [aws_security_group.es_sg.id]
-#   }
+  vpc_options {
+    subnet_ids         = var.es_subnets
+    security_group_ids = [aws_security_group.es_sg.id]
+  }
 
-#   ebs_options {
-#     ebs_enabled = true
-#     volume_size = 10
-#   }
+  ebs_options {
+    ebs_enabled = true
+    volume_size = 10
+  }
 
-#   node_to_node_encryption {
-#     enabled = true
-#   }
+  node_to_node_encryption {
+    enabled = true
+  }
 
-#   domain_endpoint_options {
-#     enforce_https       = true
-#     tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
-#   }
+  domain_endpoint_options {
+    enforce_https       = true
+    tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
+  }
 
-#   access_policies = data.aws_iam_policy_document.this.json
+  access_policies = data.aws_iam_policy_document.this.json
 
-#   tags = {
-#     Domain = var.es_domain
-#   }
-# }
+  tags = {
+    Domain = var.es_domain
+  }
+}
 
-# data "aws_iam_policy_document" "this" {
-#   statement {
-#     effect  = "Allow"
-#     actions = ["es:*"]
-#     principals {
-#       type        = "AWS"
-#       identifiers = ["*"]
-#     }
-#     resources = ["arn:aws:es:${data.aws_region.current.name}:${var.account_id}:domain/${var.es_domain}/*"]
-#   }
-# }
+data "aws_iam_policy_document" "this" {
+  statement {
+    effect  = "Allow"
+    actions = ["es:*"]
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    resources = ["arn:aws:es:${data.aws_region.current.name}:${var.account_id}:domain/${var.es_domain}/*"]
+  }
+}
 
 module "bexh_verification_email_sns_lambda" {
   source = "../bexh_sns_lambda_integration"
@@ -453,58 +453,54 @@ module "bexh_app_event_connector_service" {
     {
       name = "LOG_LEVEL"
       value = var.log_level
-    }
+    },
     {
       name = "ENV_NAME"
       value = var.env_name
-    }
+    },
     {
       name = "MODULE"
       value = "src.app.event_connector.invoke"
-    }
+    },
     {
       name = "APP_NAME"
       value = "event-connector"
-    }
+    },
     {
       name = "KINESIS_SOURCE_STREAM_NAME"
       value = "bexh-exch-events-out-${var.env_name}-${var.account_id}"
-    }
+    },
     {
       name = "KCL_STATE_MANAGER_TABLE_NAME"
       value = aws_dynamodb_table.event_connector_kcl_state_manager.name
-    }
+    },
     {
       name = "MYSQL_HOST_URL"
       value = aws_rds_cluster.this.endpoint
-    }
+    },
     {
       name = "MYSQL_DATABASE_NAME"
       value = aws_rds_cluster.this.database_name
-    }
+    },
     {
       name = "MYSQL_DB_USERNAME"
       value = local.db_creds.username
-    }
+    },
     {
       name = "MYSQL_DB_PASSWORD"
       value = local.db_creds.password
-    }
+    },
     {
       name = "ES_HOST"
       value = aws_elasticsearch_domain.es.endpoint
-    }
+    },
     {
       name = "ES_PORT"
       value = "9200"
-    }
+    },
     {
       name = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
       value = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
-    }
-    {
-      name = "VERIFICATION_EMAIL_SNS_TOPIC_ARN"
-      value = module.bexh_verification_email_sns_lambda.aws_sns_topic.arn
     }
   ]
   instance_count  = var.connector_instance_count
@@ -539,3 +535,231 @@ module "bexh_app_event_connector_service" {
     ]
   })
 }
+
+
+// section: bexh app bet connector
+
+resource "aws_dynamodb_table" "bet_connector_kcl_state_manager" {
+  name         = "bexh-app-bet-connector-kcl-st-mgmt-${var.env_name}-${var.account_id}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "shard"
+
+  attribute {
+    name = "shard"
+    type = "S"
+  }
+}
+
+module "bexh_app_bet_connector_service" {
+  source = "../bexh_ecs_service"
+
+  name            = "bet-connector"
+  cluster_id      = aws_ecs_cluster.this.id
+  env_name        = var.env_name
+  account_id      = var.account_id
+  vpc             = var.vpc
+  region          = var.region
+  image           = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}"
+  security_groups = ["${aws_security_group.ecs_sg.id}"]
+  log_level       = var.log_level
+  subnets         = var.es_subnets
+  env_vars        = [
+    {
+      name = "LOG_LEVEL"
+      value = var.log_level
+    },
+    {
+      name = "ENV_NAME"
+      value = var.env_name
+    },
+    {
+      name = "MODULE"
+      value = "src.app.bet_connector.invoke"
+    },
+    {
+      name = "APP_NAME"
+      value = "bet-connector"
+    },
+    {
+      name = "KINESIS_SOURCE_STREAM_NAME"
+      value = "bexh-exch-bets-out-${var.env_name}-${var.account_id}"
+    },
+    {
+      name = "KCL_STATE_MANAGER_TABLE_NAME"
+      value = aws_dynamodb_table.bet_connector_kcl_state_manager.name
+    },
+    {
+      name = "MYSQL_HOST_URL"
+      value = aws_rds_cluster.this.endpoint
+    },
+    {
+      name = "MYSQL_DATABASE_NAME"
+      value = aws_rds_cluster.this.database_name
+    },
+    {
+      name = "MYSQL_DB_USERNAME"
+      value = local.db_creds.username
+    },
+    {
+      name = "MYSQL_DB_PASSWORD"
+      value = local.db_creds.password
+    },
+    {
+      name = "ES_HOST"
+      value = aws_elasticsearch_domain.es.endpoint
+    },
+    {
+      name = "ES_PORT"
+      value = "9200"
+    },
+    {
+      name = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
+      value = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
+    }
+  ]
+  instance_count  = var.connector_instance_count
+  ecs_task_definition_policy = jsonencode({
+    "Version" = "2012-10-17"
+    "Statement" = [
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "kinesis:PutRecord",
+          "kinesis:PutRecords",
+          "kinesis:DescribeStream",
+          "kinesis:GetRecords",
+          "kinesis:GetShardIterator",
+          "sns:Publish",
+        ]
+        "Resource" = "bexh-*"
+      },
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "dynamodb:CreateTable",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem"
+        ]
+        "Resource" = aws_dynamodb_table.bet_connector_kcl_state_manager.arn
+      }
+    ]
+  })
+}
+
+
+// section: bexh app aggregated bet info connector
+
+# resource "aws_dynamodb_table" "ag_bet_info_connector_kcl_state_manager" {
+#   name         = "bexh-app-ag-bet-info-connector-kcl-st-mgmt-${var.env_name}-${var.account_id}"
+#   billing_mode = "PAY_PER_REQUEST"
+#   hash_key     = "shard"
+
+#   attribute {
+#     name = "shard"
+#     type = "S"
+#   }
+# }
+
+# module "bexh_app_ag_bet_info_connector_service" {
+#   source = "../bexh_ecs_service"
+
+#   name            = "ag-bet-info-connector"
+#   cluster_id      = aws_ecs_cluster.this.id
+#   env_name        = var.env_name
+#   account_id      = var.account_id
+#   vpc             = var.vpc
+#   region          = var.region
+#   image           = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}"
+#   security_groups = ["${aws_security_group.ecs_sg.id}"]
+#   log_level       = var.log_level
+#   subnets         = var.es_subnets
+#   env_vars        = [
+#     {
+#       name = "LOG_LEVEL"
+#       value = var.log_level
+#     },
+#     {
+#       name = "ENV_NAME"
+#       value = var.env_name
+#     },
+#     {
+#       name = "MODULE"
+#       value = "src.app.aggregated_bet_info_connector.invoke"
+#     },
+#     {
+#       name = "APP_NAME"
+#       value = "ag-bet-info-connector"
+#     },
+#     {
+#       name = "KINESIS_SOURCE_STREAM_NAME"
+#       value = "bexh-exch-bets-out-${var.env_name}-${var.account_id}"
+#     },
+#     {
+#       name = "KCL_STATE_MANAGER_TABLE_NAME"
+#       value = aws_dynamodb_table.ag_bet_info_connector_kcl_state_manager.name
+#     },
+#     {
+#       name = "MYSQL_HOST_URL"
+#       value = aws_rds_cluster.this.endpoint
+#     },
+#     {
+#       name = "MYSQL_DATABASE_NAME"
+#       value = aws_rds_cluster.this.database_name
+#     },
+#     {
+#       name = "MYSQL_DB_USERNAME"
+#       value = local.db_creds.username
+#     },
+#     {
+#       name = "MYSQL_DB_PASSWORD"
+#       value = local.db_creds.password
+#     },
+#     {
+#       name = "ES_HOST"
+#       value = aws_elasticsearch_domain.es.endpoint
+#     },
+#     {
+#       name = "ES_PORT"
+#       value = "9200"
+#     },
+#     {
+#       name = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
+#       value = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
+#     }
+#   ]
+#   instance_count  = var.connector_instance_count
+#   ecs_task_definition_policy = jsonencode({
+#     "Version" = "2012-10-17"
+#     "Statement" = [
+#       {
+#         "Effect" = "Allow"
+#         "Action" = [
+#           "kinesis:PutRecord",
+#           "kinesis:PutRecords",
+#           "kinesis:DescribeStream",
+#           "kinesis:GetRecords",
+#           "kinesis:GetShardIterator",
+#           "sns:Publish",
+#         ]
+#         "Resource" = "bexh-*"
+#       },
+#       {
+#         "Effect" = "Allow"
+#         "Action" = [
+#           "dynamodb:CreateTable",
+#           "dynamodb:DescribeTable",
+#           "dynamodb:GetItem",
+#           "dynamodb:PutItem",
+#           "dynamodb:Scan",
+#           "dynamodb:UpdateItem",
+#           "dynamodb:DeleteItem"
+#         ]
+#         "Resource" = aws_dynamodb_table.ag_bet_info_connector_kcl_state_manager.arn
+#       }
+#     ]
+#   })
+# }

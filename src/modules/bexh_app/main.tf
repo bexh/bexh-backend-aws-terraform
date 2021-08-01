@@ -663,116 +663,122 @@ module "bexh_app_bet_connector_service" {
 
 // section: bexh app aggregated bet info connector
 
-# resource "aws_dynamodb_table" "ag_bet_info_connector_kcl_state_manager" {
-#   name         = "bexh-app-ag-bet-info-connector-kcl-st-mgmt-${var.env_name}-${var.account_id}"
-#   billing_mode = "PAY_PER_REQUEST"
-#   hash_key     = "shard"
+resource "aws_dynamodb_table" "ag_bet_info_connector_kcl_state_manager" {
+  name         = "bexh-app-ag-bet-info-connector-kcl-st-mgmt-${var.env_name}-${var.account_id}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "shard"
 
-#   attribute {
-#     name = "shard"
-#     type = "S"
-#   }
-# }
+  attribute {
+    name = "shard"
+    type = "S"
+  }
+}
 
-# module "bexh_app_ag_bet_info_connector_service" {
-#   source = "../bexh_ecs_service"
+module "bexh_app_ag_bet_info_connector_service" {
+  source = "../bexh_ecs_service"
 
-#   name            = "ag-bet-info-connector"
-#   cluster_id      = aws_ecs_cluster.this.id
-#   env_name        = var.env_name
-#   account_id      = var.account_id
-#   vpc             = var.vpc
-#   region          = var.region
-#   image           = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}"
-#   security_groups = ["${aws_security_group.ecs_sg.id}"]
-#   log_level       = var.log_level
-#   subnets         = var.es_subnets
-#   env_vars        = [
-#     {
-#       name = "LOG_LEVEL"
-#       value = var.log_level
-#     },
-#     {
-#       name = "ENV_NAME"
-#       value = var.env_name
-#     },
-#     {
-#       name = "MODULE"
-#       value = "src.app.aggregated_bet_info_connector.invoke"
-#     },
-#     {
-#       name = "APP_NAME"
-#       value = "ag-bet-info-connector"
-#     },
-#     {
-#       name = "KINESIS_SOURCE_STREAM_NAME"
-#       value = "bexh-exch-bets-out-${var.env_name}-${var.account_id}"
-#     },
-#     {
-#       name = "KCL_STATE_MANAGER_TABLE_NAME"
-#       value = aws_dynamodb_table.ag_bet_info_connector_kcl_state_manager.name
-#     },
-#     {
-#       name = "MYSQL_HOST_URL"
-#       value = aws_rds_cluster.this.endpoint
-#     },
-#     {
-#       name = "MYSQL_DATABASE_NAME"
-#       value = aws_rds_cluster.this.database_name
-#     },
-#     {
-#       name = "MYSQL_DB_USERNAME"
-#       value = local.db_creds.username
-#     },
-#     {
-#       name = "MYSQL_DB_PASSWORD"
-#       value = local.db_creds.password
-#     },
-#     {
-#       name = "ES_HOST"
-#       value = aws_elasticsearch_domain.es.endpoint
-#     },
-#     {
-#       name = "ES_PORT"
-#       value = "9200"
-#     },
-#     {
-#       name = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
-#       value = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
-#     }
-#   ]
-#   instance_count  = var.connector_instance_count
-#   ecs_task_definition_policy = jsonencode({
-#     "Version" = "2012-10-17"
-#     "Statement" = [
-#       {
-#         "Effect" = "Allow"
-#         "Action" = [
-#           "kinesis:PutRecord",
-#           "kinesis:PutRecords",
-#           "kinesis:DescribeStream",
-#           "kinesis:GetRecords",
-#           "kinesis:GetShardIterator",
-#           "sns:Publish",
-#         ]
-#         "Resource" = "bexh-*"
-#       },
-#       {
-#         "Effect" = "Allow"
-#         "Action" = [
-#           "dynamodb:CreateTable",
-#           "dynamodb:DescribeTable",
-#           "dynamodb:GetItem",
-#           "dynamodb:PutItem",
-#           "dynamodb:Scan",
-#           "dynamodb:UpdateItem",
-#           "dynamodb:DeleteItem"
-#         ]
-#         "Resource" = aws_dynamodb_table.ag_bet_info_connector_kcl_state_manager.arn
-#       }
-#     ]
-#   })
-# }
+  name            = "ag-bet-info-connector"
+  cluster_id      = aws_ecs_cluster.this.id
+  env_name        = var.env_name
+  account_id      = var.account_id
+  vpc             = var.vpc
+  region          = var.region
+  image           = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com/bexh-connector-aws-ecs:${var.connector_image_tag}"
+  security_groups = ["${aws_security_group.ecs_sg.id}"]
+  log_level       = var.log_level
+  subnets         = var.es_subnets
+  env_vars        = [
+    {
+      name = "LOG_LEVEL"
+      value = var.log_level
+    },
+    {
+      name = "ENV_NAME"
+      value = var.env_name
+    },
+    {
+      name = "MODULE"
+      value = "src.app.aggregated_bet_info_connector.invoke"
+    },
+    {
+      name = "APP_NAME"
+      value = "ag-bet-info-connector"
+    },
+    {
+      name = "KINESIS_SOURCE_STREAM_NAME"
+      value = "bexh-exch-bets-out-${var.env_name}-${var.account_id}"
+    },
+    {
+      name = "KCL_STATE_MANAGER_TABLE_NAME"
+      value = aws_dynamodb_table.ag_bet_info_connector_kcl_state_manager.name
+    },
+    {
+      name = "MYSQL_HOST_URL"
+      value = aws_rds_cluster.this.endpoint
+    },
+    {
+      name = "MYSQL_DATABASE_NAME"
+      value = aws_rds_cluster.this.database_name
+    },
+    {
+      name = "MYSQL_DB_USERNAME"
+      value = local.db_creds.username
+    },
+    {
+      name = "MYSQL_DB_PASSWORD"
+      value = local.db_creds.password
+    },
+    {
+      name = "ES_HOST"
+      value = aws_elasticsearch_domain.es.endpoint
+    },
+    {
+      name = "ES_PORT"
+      value = "9200"
+    },
+    {
+      name = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
+      value = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
+    }
+  ]
+  instance_count  = var.connector_instance_count
+  ecs_task_definition_policy = jsonencode({
+    "Version" = "2012-10-17"
+    "Statement" = [
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "kinesis:PutRecord",
+          "kinesis:PutRecords",
+          "kinesis:DescribeStream",
+          "kinesis:GetRecords",
+          "kinesis:GetShardIterator"
+        ]
+        "Resource" = "arn:aws:kinesis:${var.region}:${var.account_id}:stream/bexh-*"
+      },
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "sns:Publish"
+        ]
+        "Resource" = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
+      },
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "dynamodb:CreateTable",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem"
+        ]
+        "Resource" = aws_dynamodb_table.ag_bet_info_connector_kcl_state_manager.arn
+      }
+    ]
+  })
+}
 
 // section: bet aggregator kinesis analytics app
 

@@ -843,17 +843,17 @@ resource "aws_kinesis_analytics_application" "this" {
   name                   = "bexh-app-bet-aggregator-${var.env_name}-${var.account_id}"
   start_application = true
   code = <<EOF
-        CREATE OR REPLACE STREAM "DESTINATION_SQL_STREAM" (
+        CREATE OR REPLACE STREAM "AGG_BETS" (
                                           "event_id" INTEGER, 
                                           "odds"   DOUBLE);
         -- CREATE OR REPLACE PUMP to insert into output
         CREATE OR REPLACE PUMP "STREAM_PUMP" AS 
-          INSERT INTO "DESTINATION_SQL_STREAM" 
+          INSERT INTO "AGG_BETS" 
             SELECT STREAM "event_id",
                           AVG("odds") AS odds
-            FROM    "SOURCE_SQL_STREAM_001"
+            FROM    "BEXH_BETS_001"
             GROUP BY "event_id", 
-                    STEP("SOURCE_SQL_STREAM_001".ROWTIME BY INTERVAL '5' MINUTE);
+                    STEP("BEXH_BETS_001".ROWTIME BY INTERVAL '5' MINUTE);
         EOF
   inputs {
     name_prefix = "BEXH_BETS"

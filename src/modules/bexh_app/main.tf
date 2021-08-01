@@ -124,7 +124,7 @@ resource "aws_lambda_function" "bexh_api_proxy_post" {
       MYSQL_DATABASE_NAME               = aws_rds_cluster.this.database_name
       BET_STATUS_CHANGE_EMAIL_SNS_TOPIC = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
       VERIFICATION_EMAIL_SNS_TOPIC      = module.bexh_verification_email_sns_lambda.aws_sns_topic.arn
-      EXCHANGE_BET_KINESIS_STREAM       = aws_kinesis_stream.this.name
+      EXCHANGE_BET_KINESIS_STREAM       = var.make_bets_kinesis_stream_name
     }
   }
 }
@@ -329,62 +329,6 @@ module "bexh_bet_status_change_sns_lambda" {
   }
 
   sns_topic_name = "bet-status-change-email"
-}
-
-// region: Kinesis Lambda Integration
-resource "aws_kinesis_stream" "this" {
-  name        = "bexh-exchange-bet-${var.env_name}-${var.account_id}"
-  shard_count = 1
-  shard_level_metrics = [
-    "IncomingRecords",
-    "OutgoingRecords"
-  ]
-}
-
-module "bexh_bet_submit_lambda" {
-  source = "../bexh_lambda"
-
-  function_name     = "bet-submit"
-  s3_key            = "bexh-bet-submit-aws-lambda.zip"
-  s3_object_version = var.bexh_bet_submit_lambda_s3_version
-  env_name          = var.env_name
-  account_id        = var.account_id
-  handler           = "main.src.service.handler"
-  env_vars = {
-    ENV_NAME  = var.env_name
-    LOG_LEVEL = var.log_level
-  }
-}
-
-resource "aws_iam_policy" "bet_submit_kinesis_policy" {
-  name        = "bexh-bet-submit-kinesis-${var.env_name}-${var.account_id}"
-  description = "Allows kinesis to invoke lambda"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "kinesis:*"
-      ],
-      "Effect": "Allow",
-      "Resource": "${aws_kinesis_stream.this.arn}"
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_iam_role_policy_attachment" "kinesis_lambda" {
-  role       = module.bexh_bet_submit_lambda.aws_iam_role.name
-  policy_arn = aws_iam_policy.bet_submit_kinesis_policy.arn
-}
-
-resource "aws_lambda_event_source_mapping" "this" {
-  event_source_arn  = aws_kinesis_stream.this.arn
-  function_name     = module.bexh_bet_submit_lambda.aws_lambda_function.arn
-  starting_position = "LATEST"
 }
 
 // section: ECS Fargate Configuration

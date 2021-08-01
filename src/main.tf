@@ -37,6 +37,8 @@ module "bexh_app" {
   bexh_bet_submit_lambda_s3_version = var.bexh_bet_submit_lambda_s3_version
   connector_image_tag = var.connector_image_tag
   connector_instance_count = var.connector_instance_count
+
+  bets_kinesis_stream_arn = module.bexh_exchange.outgoing_bets.arn
 }
 
 module "bexh_exchange" {

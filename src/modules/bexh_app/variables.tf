@@ -15,7 +15,7 @@ variable "account_id" {
 }
 
 variable "region" {
-    type = string
+  type = string
 }
 
 variable "bexh_api_lambda_s3_version" {
@@ -72,4 +72,9 @@ variable "connector_image_tag" {
 variable "connector_instance_count" {
   type        = number
   description = "number of ecs instances"
+}
+
+variable "bets_kinesis_stream_arn" {
+  type        = string
+  description = "arn of the kinesis stream of all outgoing bets"
 }

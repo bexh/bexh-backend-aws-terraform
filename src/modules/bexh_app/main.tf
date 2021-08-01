@@ -449,61 +449,61 @@ module "bexh_app_event_connector_service" {
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
-  env_vars        = [
+  env_vars = [
     {
-      name = "LOG_LEVEL"
+      name  = "LOG_LEVEL"
       value = var.log_level
     },
     {
-      name = "ENV_NAME"
+      name  = "ENV_NAME"
       value = var.env_name
     },
     {
-      name = "MODULE"
+      name  = "MODULE"
       value = "src.app.event_connector.invoke"
     },
     {
-      name = "APP_NAME"
+      name  = "APP_NAME"
       value = "event-connector"
     },
     {
-      name = "KINESIS_SOURCE_STREAM_NAME"
+      name  = "KINESIS_SOURCE_STREAM_NAME"
       value = "bexh-exch-events-out-${var.env_name}-${var.account_id}"
     },
     {
-      name = "KCL_STATE_MANAGER_TABLE_NAME"
+      name  = "KCL_STATE_MANAGER_TABLE_NAME"
       value = aws_dynamodb_table.event_connector_kcl_state_manager.name
     },
     {
-      name = "MYSQL_HOST_URL"
+      name  = "MYSQL_HOST_URL"
       value = aws_rds_cluster.this.endpoint
     },
     {
-      name = "MYSQL_DATABASE_NAME"
+      name  = "MYSQL_DATABASE_NAME"
       value = aws_rds_cluster.this.database_name
     },
     {
-      name = "MYSQL_DB_USERNAME"
+      name  = "MYSQL_DB_USERNAME"
       value = local.db_creds.username
     },
     {
-      name = "MYSQL_DB_PASSWORD"
+      name  = "MYSQL_DB_PASSWORD"
       value = local.db_creds.password
     },
     {
-      name = "ES_HOST"
+      name  = "ES_HOST"
       value = aws_elasticsearch_domain.es.endpoint
     },
     {
-      name = "ES_PORT"
+      name  = "ES_PORT"
       value = "9200"
     },
     {
-      name = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
+      name  = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
       value = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
     }
   ]
-  instance_count  = var.connector_instance_count
+  instance_count = var.connector_instance_count
   ecs_task_definition_policy = jsonencode({
     "Version" = "2012-10-17"
     "Statement" = [
@@ -563,61 +563,61 @@ module "bexh_app_bet_connector_service" {
   security_groups = ["${aws_security_group.ecs_sg.id}"]
   log_level       = var.log_level
   subnets         = var.es_subnets
-  env_vars        = [
+  env_vars = [
     {
-      name = "LOG_LEVEL"
+      name  = "LOG_LEVEL"
       value = var.log_level
     },
     {
-      name = "ENV_NAME"
+      name  = "ENV_NAME"
       value = var.env_name
     },
     {
-      name = "MODULE"
+      name  = "MODULE"
       value = "src.app.bet_connector.invoke"
     },
     {
-      name = "APP_NAME"
+      name  = "APP_NAME"
       value = "bet-connector"
     },
     {
-      name = "KINESIS_SOURCE_STREAM_NAME"
+      name  = "KINESIS_SOURCE_STREAM_NAME"
       value = "bexh-exch-bets-out-${var.env_name}-${var.account_id}"
     },
     {
-      name = "KCL_STATE_MANAGER_TABLE_NAME"
+      name  = "KCL_STATE_MANAGER_TABLE_NAME"
       value = aws_dynamodb_table.bet_connector_kcl_state_manager.name
     },
     {
-      name = "MYSQL_HOST_URL"
+      name  = "MYSQL_HOST_URL"
       value = aws_rds_cluster.this.endpoint
     },
     {
-      name = "MYSQL_DATABASE_NAME"
+      name  = "MYSQL_DATABASE_NAME"
       value = aws_rds_cluster.this.database_name
     },
     {
-      name = "MYSQL_DB_USERNAME"
+      name  = "MYSQL_DB_USERNAME"
       value = local.db_creds.username
     },
     {
-      name = "MYSQL_DB_PASSWORD"
+      name  = "MYSQL_DB_PASSWORD"
       value = local.db_creds.password
     },
     {
-      name = "ES_HOST"
+      name  = "ES_HOST"
       value = aws_elasticsearch_domain.es.endpoint
     },
     {
-      name = "ES_PORT"
+      name  = "ES_PORT"
       value = "9200"
     },
     {
-      name = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
+      name  = "BET_STATUS_CHANGE_EMAIL_SNS_TOPIC_ARN"
       value = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
     }
   ]
-  instance_count  = var.connector_instance_count
+  instance_count = var.connector_instance_count
   ecs_task_definition_policy = jsonencode({
     "Version" = "2012-10-17"
     "Statement" = [
@@ -763,3 +763,192 @@ module "bexh_app_bet_connector_service" {
 #     ]
 #   })
 # }
+
+// section: bet aggregator kinesis analytics app
+
+resource "aws_cloudwatch_log_group" "this" {
+  name = "bexh-app-${var.env_name}-${var.account_id}"
+}
+
+resource "aws_cloudwatch_log_stream" "this" {
+  name           = "bexh-app-agg-bets-${var.env_name}-${var.account_id}"
+  log_group_name = aws_cloudwatch_log_group.this.name
+}
+
+resource "aws_kinesis_stream" "bexh_app_agg_bets" {
+  name             = "bexh-app-agg-bets-${var.env_name}-${var.account_id}"
+  shard_count      = 1
+}
+
+resource "aws_iam_role" "bexh_kinesis_analytics_execution_role" {
+  name = "bexh-app-kinesis-analytics-execution-role"
+
+  inline_policy {
+    name = "bexh-app-kinesis-analytics-kinesis-access"
+
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Action = [
+            "kinesis:DescribeStream",
+            "kinesis:GetShardIterator",
+            "kinesis:GetRecords",
+            "kinesis:ListShards"
+          ],
+          Effect   = "Allow",
+          Resource = var.bets_kinesis_stream_arn
+        },
+        {
+          Action = [
+            "kinesis:DescribeStream",
+            "kinesis:PutRecord",
+            "kinesis:PutRecords"
+          ],
+          Effect = "Allow",
+          Resource = aws_kinesis_stream.bexh_app_agg_bets.arn
+        }
+      ]
+    })
+  }
+
+  assume_role_policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "kinesisanalytics.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_kinesisanalyticsv2_application" "this" {
+  name                   = "bexh-app-bet-aggregator-${var.env_name}-${var.account_id}"
+  runtime_environment    = "SQL-1_0"
+  service_execution_role = aws_iam_role.bexh_kinesis_analytics_execution_role.arn
+
+  application_configuration {
+    application_code_configuration {
+      code_content {
+        text_content = <<EOF
+        CREATE OR REPLACE STREAM "DESTINATION_SQL_STREAM" (
+                                          "event_id" INTEGER, 
+                                          "odds"   DOUBLE);
+        -- CREATE OR REPLACE PUMP to insert into output
+        CREATE OR REPLACE PUMP "STREAM_PUMP" AS 
+          INSERT INTO "DESTINATION_SQL_STREAM" 
+            SELECT STREAM "event_id",
+                          AVG("odds") AS odds
+            FROM    "SOURCE_SQL_STREAM_001"
+            GROUP BY "event_id", 
+                    STEP("SOURCE_SQL_STREAM_001".ROWTIME BY INTERVAL '5' MINUTE);
+        EOF
+      }
+
+      code_content_type = "PLAINTEXT"
+    }
+
+    sql_application_configuration {
+      input {
+        name_prefix = "BEXH_BETS"
+
+        input_parallelism {
+          count = 1
+        }
+
+        input_schema {
+          record_column {
+            name     = "event_id"
+            sql_type = "INTEGER"
+            mapping  = "$.event_id"
+          }
+          record_column {
+            name     = "sport"
+            sql_type = "VARCHAR(8)"
+            mapping  = "$.sport"
+          }
+          record_column {
+            name     = "bet_id"
+            sql_type = "INTEGER"
+            mapping  = "$.bets[0:].bet_id"
+          }
+          record_column {
+            name     = "brokerage_id"
+            sql_type = "INTEGER"
+            mapping  = "$.bets[0:].brokerage_id"
+          }
+          record_column {
+            name     = "user_id"
+            sql_type = "VARCHAR"
+            mapping  = "$.bets[0:].user_id"
+          }
+          record_column {
+            name     = "amount"
+            sql_type = "INTEGER"
+            mapping  = "$.bets[0:].amount"
+          }
+          record_column {
+            name     = "event_id"
+            sql_type = "INTEGER"
+            mapping  = "$.event_id"
+          }
+          record_column {
+            name     = "status"
+            sql_type = "VARCHAR(8)"
+            mapping  = "$.bets[0:].status"
+          }
+          record_column {
+            name     = "execution_time"
+            sql_type = "VARCHAR(32)"
+            mapping  = "$.execution_time"
+          }
+          record_column {
+            name     = "odds"
+            sql_type = "INTEGER"
+            mapping  = "$.odds"
+          }
+
+          record_encoding = "UTF-8"
+
+          record_format {
+            record_format_type = "JSON"
+
+            mapping_parameters {
+              json_mapping_parameters {
+                record_row_path = "$"
+              }
+            }
+          }
+        }
+
+        kinesis_streams_input {
+          resource_arn = var.bets_kinesis_stream_arn
+        }
+      }
+
+      output {
+        name = "AGG_BETS"
+
+        destination_schema {
+          record_format_type = "JSON"
+        }
+
+        kinesis_streams_output {
+          resource_arn = aws_kinesis_stream.bexh_app_agg_bets.arn
+        }
+
+      }
+    }
+  }
+
+  cloudwatch_logging_options {
+    log_stream_arn = aws_cloudwatch_log_stream.this.arn
+  }
+}

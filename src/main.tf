@@ -39,6 +39,7 @@ module "bexh_app" {
   connector_instance_count = var.connector_instance_count
 
   bets_kinesis_stream_arn = module.bexh_exchange.outgoing_bets.arn
+  events_kinesis_stream_arn = module.bexh_exchange.outgoing_events.arn
 }
 
 module "bexh_exchange" {

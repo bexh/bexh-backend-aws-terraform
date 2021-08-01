@@ -515,12 +515,16 @@ module "bexh_app_event_connector_service" {
           "kinesis:DescribeStream",
           "kinesis:GetRecords",
           "kinesis:GetShardIterator",
-          "sns:Publish",
         ]
-        "Resource" = "bexh-*"
+        "Resource" = "arn:aws:kinesis:${var.region}:${var.account_id}:stream/bexh-*"
       },
       {
-        "Effect" = "Allow"
+        "Effect" = "Allow",
+        "Action" = "sns:Publish",
+        "Resource" = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
+      },
+      {
+        "Effect" = "Allow",
         "Action" = [
           "dynamodb:CreateTable",
           "dynamodb:DescribeTable",
@@ -529,7 +533,7 @@ module "bexh_app_event_connector_service" {
           "dynamodb:Scan",
           "dynamodb:UpdateItem",
           "dynamodb:DeleteItem"
-        ]
+        ],
         "Resource" = aws_dynamodb_table.event_connector_kcl_state_manager.arn
       }
     ]
@@ -628,10 +632,16 @@ module "bexh_app_bet_connector_service" {
           "kinesis:PutRecords",
           "kinesis:DescribeStream",
           "kinesis:GetRecords",
-          "kinesis:GetShardIterator",
-          "sns:Publish",
+          "kinesis:GetShardIterator"
         ]
-        "Resource" = "bexh-*"
+        "Resource" = "arn:aws:kinesis:${var.region}:${var.account_id}:stream/bexh-*"
+      },
+      {
+        "Effect" = "Allow"
+        "Action" = [
+          "sns:Publish"
+        ]
+        "Resource" = module.bexh_bet_status_change_sns_lambda.aws_sns_topic.arn
       },
       {
         "Effect" = "Allow"
@@ -886,7 +896,7 @@ resource "aws_kinesisanalyticsv2_application" "this" {
           }
           record_column {
             name     = "user_id"
-            sql_type = "VARCHAR"
+            sql_type = "VARCHAR(64)"
             mapping  = "$.bets[0:].user_id"
           }
           record_column {

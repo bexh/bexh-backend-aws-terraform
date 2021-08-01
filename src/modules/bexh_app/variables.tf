@@ -78,3 +78,8 @@ variable "bets_kinesis_stream_arn" {
   type        = string
   description = "arn of the kinesis stream of all outgoing bets"
 }
+
+variable "events_kinesis_stream_arn" {
+  type        = string
+  description = "arn of the kinesis stream of all event updates"
+}

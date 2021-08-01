@@ -40,6 +40,7 @@ module "bexh_app" {
 
   bets_kinesis_stream_arn = module.bexh_exchange.outgoing_bets.arn
   events_kinesis_stream_arn = module.bexh_exchange.outgoing_events.arn
+  make_bets_kinesis_stream_name = module.bexh_exchange.incoming_bets.name
 }
 
 module "bexh_exchange" {

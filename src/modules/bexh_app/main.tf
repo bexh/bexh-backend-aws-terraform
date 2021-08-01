@@ -839,15 +839,10 @@ resource "aws_iam_role" "bexh_kinesis_analytics_execution_role" {
 POLICY
 }
 
-resource "aws_kinesisanalyticsv2_application" "this" {
+resource "aws_kinesis_analytics_application" "this" {
   name                   = "bexh-app-bet-aggregator-${var.env_name}-${var.account_id}"
-  runtime_environment    = "SQL-1_0"
-  service_execution_role = aws_iam_role.bexh_kinesis_analytics_execution_role.arn
-
-  application_configuration {
-    application_code_configuration {
-      code_content {
-        text_content = <<EOF
+  start_application = true
+  code = <<EOF
         CREATE OR REPLACE STREAM "DESTINATION_SQL_STREAM" (
                                           "event_id" INTEGER, 
                                           "odds"   DOUBLE);
@@ -860,100 +855,99 @@ resource "aws_kinesisanalyticsv2_application" "this" {
             GROUP BY "event_id", 
                     STEP("SOURCE_SQL_STREAM_001".ROWTIME BY INTERVAL '5' MINUTE);
         EOF
+  inputs {
+    name_prefix = "BEXH_BETS"
+
+    schema {
+      record_columns {
+        name     = "event_id"
+        sql_type = "INTEGER"
+        mapping  = "$.event_id"
+      }
+      record_columns {
+        name     = "sport"
+        sql_type = "VARCHAR(8)"
+        mapping  = "$.sport"
+      }
+      record_columns {
+        name     = "bet_id"
+        sql_type = "INTEGER"
+        mapping  = "$.bets[0:].bet_id"
+      }
+      record_columns {
+        name     = "brokerage_id"
+        sql_type = "INTEGER"
+        mapping  = "$.bets[0:].brokerage_id"
+      }
+      record_columns {
+        name     = "user_id"
+        sql_type = "VARCHAR(64)"
+        mapping  = "$.bets[0:].user_id"
+      }
+      record_columns {
+        name     = "amount"
+        sql_type = "INTEGER"
+        mapping  = "$.bets[0:].amount"
+      }
+      record_columns {
+        name     = "status"
+        sql_type = "VARCHAR(8)"
+        mapping  = "$.bets[0:].status"
+      }
+      record_columns {
+        name     = "execution_time"
+        sql_type = "VARCHAR(32)"
+        mapping  = "$.execution_time"
+      }
+      record_columns {
+        name     = "odds"
+        sql_type = "INTEGER"
+        mapping  = "$.odds"
       }
 
-      code_content_type = "PLAINTEXT"
-    }
+      record_encoding = "UTF-8"
 
-    sql_application_configuration {
-      input {
-        name_prefix = "BEXH_BETS"
+      record_format {
+        # record_format_type = "JSON"
 
-        input_parallelism {
-          count = 1
-        }
-
-        input_schema {
-          record_column {
-            name     = "event_id"
-            sql_type = "INTEGER"
-            mapping  = "$.event_id"
-          }
-          record_column {
-            name     = "sport"
-            sql_type = "VARCHAR(8)"
-            mapping  = "$.sport"
-          }
-          record_column {
-            name     = "bet_id"
-            sql_type = "INTEGER"
-            mapping  = "$.bets[0:].bet_id"
-          }
-          record_column {
-            name     = "brokerage_id"
-            sql_type = "INTEGER"
-            mapping  = "$.bets[0:].brokerage_id"
-          }
-          record_column {
-            name     = "user_id"
-            sql_type = "VARCHAR(64)"
-            mapping  = "$.bets[0:].user_id"
-          }
-          record_column {
-            name     = "amount"
-            sql_type = "INTEGER"
-            mapping  = "$.bets[0:].amount"
-          }
-          record_column {
-            name     = "status"
-            sql_type = "VARCHAR(8)"
-            mapping  = "$.bets[0:].status"
-          }
-          record_column {
-            name     = "execution_time"
-            sql_type = "VARCHAR(32)"
-            mapping  = "$.execution_time"
-          }
-          record_column {
-            name     = "odds"
-            sql_type = "INTEGER"
-            mapping  = "$.odds"
-          }
-
-          record_encoding = "UTF-8"
-
-          record_format {
-            record_format_type = "JSON"
-
-            mapping_parameters {
-              json_mapping_parameters {
-                record_row_path = "$"
-              }
-            }
+        mapping_parameters {
+          json {
+            record_row_path = "$"
           }
         }
-
-        kinesis_streams_input {
-          resource_arn = var.bets_kinesis_stream_arn
-        }
-      }
-
-      output {
-        name = "AGG_BETS"
-
-        destination_schema {
-          record_format_type = "JSON"
-        }
-
-        kinesis_streams_output {
-          resource_arn = aws_kinesis_stream.bexh_app_agg_bets.arn
-        }
-
       }
     }
+
+    starting_position_configuration {
+      starting_position = "TRIM_HORIZON"
+    }
+
+    kinesis_stream {
+      resource_arn = var.bets_kinesis_stream_arn
+      role_arn = aws_iam_role.bexh_kinesis_analytics_execution_role.arn
+    }
+
+    parallelism {
+      count = 1
+    }
+  }
+
+  outputs {
+    name = "AGG_BETS"
+
+    schema {
+      record_format_type = "JSON"
+    }
+
+    kinesis_stream {
+      resource_arn = aws_kinesis_stream.bexh_app_agg_bets.arn
+      role_arn = aws_iam_role.bexh_kinesis_analytics_execution_role.arn
+    }
+
   }
 
   cloudwatch_logging_options {
     log_stream_arn = aws_cloudwatch_log_stream.this.arn
+    role_arn = aws_iam_role.bexh_kinesis_analytics_execution_role.arn
   }
 }

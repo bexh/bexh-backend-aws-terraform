@@ -27,6 +27,7 @@ module "container_definition" {
   network_mode = "awsvpc"
   portMappings = var.portMappings
   secrets      = var.secrets
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   logConfiguration = {
     logDriver = "awslogs"
     options = {

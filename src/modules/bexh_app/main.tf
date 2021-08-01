@@ -905,11 +905,6 @@ resource "aws_kinesisanalyticsv2_application" "this" {
             mapping  = "$.bets[0:].amount"
           }
           record_column {
-            name     = "event_id"
-            sql_type = "INTEGER"
-            mapping  = "$.event_id"
-          }
-          record_column {
             name     = "status"
             sql_type = "VARCHAR(8)"
             mapping  = "$.bets[0:].status"
